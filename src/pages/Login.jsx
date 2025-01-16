@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { auth, signInWithEmailAndPassword } from "../components/firebse"; // Import Firebase auth methods
 
 function Login({ setIsAuthenticated }) {
   const [email, setEmail] = useState("");
@@ -9,14 +10,36 @@ function Login({ setIsAuthenticated }) {
   const [rememberMe, setRememberMe] = useState(false); // To handle 'Remember Me' checkbox
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (email === "admin@gmail.com" && password === "password123") {
-      setIsAuthenticated(true);
-      navigate("/"); // Redirect to Dashboard
-    } else {
-      setError("Invalid credentials");
+    // Basic validation
+    if (!email || !password) {
+      setError("Both fields are required!");
+      return;
+    }
+
+    try {
+      // Firebase authentication: Sign in user with email and password
+      await signInWithEmailAndPassword(auth, email, password);
+      setError(""); // Clear error message on success
+
+      // Optionally, handle 'Remember Me' logic by storing the user session
+      if (rememberMe) {
+        localStorage.setItem("userEmail", email); // Store email in local storage
+      }
+
+      setIsAuthenticated(true); // Set user as authenticated
+      navigate("/admin"); // Redirect to /admin after successful login
+    } catch (err) {
+      // Handle Firebase errors
+      if (err.code === "auth/user-not-found") {
+        setError("User not found. Please check your email.");
+      } else if (err.code === "auth/wrong-password") {
+        setError("Incorrect password. Please try again.");
+      } else {
+        setError("Something went wrong! Please try again.");
+      }
     }
   };
 
@@ -108,29 +131,6 @@ function Login({ setIsAuthenticated }) {
             >
               Forgot your password?
             </a>
-          </div>
-
-          {/* Social Login Section */}
-          <div className="flex justify-between items-center mt-6">
-            <div className="h-px bg-gray-300 flex-grow"></div>
-            <span className="text-gray-600 px-2">OR</span>
-            <div className="h-px bg-gray-300 flex-grow"></div>
-          </div>
-
-          {/* Social Media Login */}
-          <div className="flex justify-between mt-4">
-            <button
-              className="bg-blue-500 text-white py-2 px-4 rounded-lg shadow-md hover:bg-blue-600 transition duration-300"
-              onClick={() => alert("Google Login clicked")}
-            >
-              Google
-            </button>
-            <button
-              className="bg-gray-800 text-white py-2 px-4 rounded-lg shadow-md hover:bg-gray-700 transition duration-300"
-              onClick={() => alert("Facebook Login clicked")}
-            >
-              Facebook
-            </button>
           </div>
 
           {/* Register Link */}

@@ -14,34 +14,44 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     // Basic validation
     if (!email || !password || !confirmPassword) {
       setError("All fields are required!");
       return;
     }
-
+  
     if (password !== confirmPassword) {
       setError("Passwords do not match!");
       return;
     }
-
+  
     if (!termsAccepted) {
       setError("You must accept the terms and conditions!");
       return;
     }
-
+  
     try {
-      // Firebase authentication: Create user
+      // Firebase authentication: Create user with email and password
       await createUserWithEmailAndPassword(auth, email, password);
       setError(""); // Clear error message on success
-      navigate("/login"); // Redirect to Login page after successful registration
+  
+      // Redirect to Login page after successful registration
+      navigate("/login"); 
     } catch (err) {
       // Handle Firebase errors
-      setError(err.message);
+      if (err.code === "auth/email-already-in-use") {
+        setError("This email is already in use.");
+      } else if (err.code === "auth/invalid-email") {
+        setError("Please enter a valid email address.");
+      } else if (err.code === "auth/weak-password") {
+        setError("Password should be at least 6 characters.");
+      } else {
+        setError("Something went wrong! Please try again.");
+      }
     }
   };
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-200 to-blue-900 flex items-center justify-center px-4">
       <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white rounded-xl shadow-xl">

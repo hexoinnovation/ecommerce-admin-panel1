@@ -21,7 +21,7 @@ function Products() {
     const fetchProducts = async () => {
       try {
         const querySnapshot = await getDocs(
-          collection(db, "admin", sanitizedEmail, "Products")
+          collection(db, "Products")
         );
         const fetchedProducts = querySnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -46,7 +46,7 @@ function Products() {
 
   const handleAddProduct = async (productData) => {
     try {
-      const collectionRef = collection(db, "admin", sanitizedEmail, "Products");
+      const collectionRef = collection(db, "Products");
       const docRef = await addDoc(collectionRef, productData);
       setProducts([...products, { ...productData, id: docRef.id }]);
       alert("Product added successfully!");
@@ -58,7 +58,7 @@ function Products() {
 
   const handleEditProduct = async (productData) => {
     try {
-      const docRef = doc(db, "admin", sanitizedEmail, "Products", productData.id);
+      const docRef = doc(db, "Products", productData.id);
       await setDoc(docRef, productData);
       const updatedProducts = products.map((product) =>
         product.id === productData.id ? productData : product
@@ -74,7 +74,7 @@ function Products() {
 
   const handleDeleteProduct = async (productId) => {
     try {
-      const docRef = doc(db, "admin", sanitizedEmail, "Products", productId);
+      const docRef = doc(db,  "Products", productId);
       await deleteDoc(docRef);
       setProducts(products.filter((product) => product.id !== productId));
       alert("Product deleted successfully!");

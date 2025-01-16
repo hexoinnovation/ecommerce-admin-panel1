@@ -1,194 +1,201 @@
-import React, { useState } from "react";
-import ProductForm from "../pages/ProductForm"; // Assuming you have a form for adding/editing products
+import React, { useState } from 'react';
 
-function Products() {
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "Product 1",
-      price: 100,
-      description: "Description 1",
-      stock: 50,
-      category: "Electronics",
-      visible: true,
-      sku: "P001",
-      discountPrice: null,
-      rating: 4.5,
-      image: "/path/to/image1.jpg",
-      tags: ["New", "Popular"],
-    },
-    {
-      id: 2,
-      name: "Product 2",
-      price: 150,
-      description: "Description 2",
-      stock: 30,
-      category: "Clothing",
-      visible: true,
-      sku: "P002",
-      discountPrice: 130,
-      rating: 4.0,
-      image: "/path/to/image2.jpg",
-      tags: ["Sale", "Limited Edition"],
-    },
-    // Add more products here
+const ShippingSettings = () => {
+  const [shippingMethods, setShippingMethods] = useState([
+    { id: 1, name: 'Flat Rate', rate: 100, enabled: true },
+    { id: 2, name: 'Free Shipping', rate: 0, enabled: true },
+    { id: 3, name: 'Carrier: India Post', rate: 150, enabled: false },
   ]);
 
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [searchQuery, setSearchQuery] = useState(""); // For search/filter functionality
-  const [categoryFilter, setCategoryFilter] = useState(""); // Filter by category
-  const [modalVisible, setModalVisible] = useState(false); // Show/hide modal for product list
+  const [newMethodName, setNewMethodName] = useState('');
+  const [newMethodRate, setNewMethodRate] = useState(0);
+  const [selectedMethod, setSelectedMethod] = useState([]);
+  const [regions, setRegions] = useState([
+    { id: 1, region: 'Delhi', shippingCost: 50 },
+    { id: 2, region: 'Mumbai', shippingCost: 100 },
+    { id: 3, region: 'Bengaluru', shippingCost: 75 },
+  ]);
+  const [newRegion, setNewRegion] = useState('');
+  const [newRegionCost, setNewRegionCost] = useState(0);
 
-  const categories = ["Electronics", "Clothing", "Home Appliances", "Sports"]; // Example categories
-
-  // Add product
-  const handleAddProduct = (productData) => {
-    setProducts([...products, { ...productData, id: products.length + 1 }]);
-  };
-
-  // Edit product
-  const handleEditProduct = (productData) => {
-    const updatedProducts = products.map((product) =>
-      product.id === productData.id ? productData : product
+  const toggleShippingMethod = (id) => {
+    setShippingMethods((prevMethods) =>
+      prevMethods.map((method) =>
+        method.id === id
+          ? { ...method, enabled: !method.enabled }
+          : method
+      )
     );
-    setProducts(updatedProducts);
-    setEditingProduct(null);
   };
 
-  // Delete product
-  const handleDeleteProduct = (productId) => {
-    setProducts(products.filter((product) => product.id !== productId));
+  const addShippingMethod = () => {
+    if (newMethodName && newMethodRate >= 0) {
+      const newMethod = {
+        id: shippingMethods.length + 1,
+        name: newMethodName,
+        rate: newMethodRate,
+        enabled: false,
+      };
+      setShippingMethods([...shippingMethods, newMethod]);
+      setNewMethodName('');
+      setNewMethodRate(0);
+    }
   };
 
-  // Filter products based on the search query and category
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      (categoryFilter ? product.category === categoryFilter : true)
-  );
+  const removeShippingMethod = (id) => {
+    setShippingMethods(shippingMethods.filter((method) => method.id !== id));
+  };
+
+  const handleSelectMethod = (id) => {
+    if (selectedMethod.includes(id)) {
+      setSelectedMethod(selectedMethod.filter((methodId) => methodId !== id));
+    } else {
+      setSelectedMethod([...selectedMethod, id]);
+    }
+  };
+
+  const addRegion = () => {
+    if (newRegion && newRegionCost >= 0) {
+      const newRegionObj = {
+        id: regions.length + 1,
+        region: newRegion,
+        shippingCost: newRegionCost,
+      };
+      setRegions([...regions, newRegionObj]);
+      setNewRegion('');
+      setNewRegionCost(0);
+    }
+  };
+
+  const removeRegion = (id) => {
+    setRegions(regions.filter((region) => region.id !== id));
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Product Form Title and Show Product List Button in same row */}
-      <div className="flex justify-between items-center bg-white p-2 rounded-lg shadow-md mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">
-          {editingProduct ? "Edit Product" : "Add New Product"}
-        </h2>
-        <button
-          className="p-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition duration-200"
-          onClick={() => setModalVisible(true)}
-        >
-          Show Product List
-        </button>
-      </div>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">Shipping Settings</h1>
 
-      {/* Product Form */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-4">
-        <ProductForm
-          onSubmit={editingProduct ? handleEditProduct : handleAddProduct}
-          existingProduct={editingProduct}
-        />
-      </div>
-
-      {/* Product List Modal Title */}
-      {modalVisible && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-          <div className="bg-white p-4 rounded-lg shadow-lg max-w-3xl w-full">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Product List
-            </h2>
-
-            {/* Search Bar for Product List */}
-            <div className="flex justify-between items-center mb-4">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search products..."
-                className="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            {/* Category Filter */}
-            <div className="flex justify-between items-center mb-4">
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full sm:w-1/3 p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      {/* 2-Column Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Left Column - Shipping Methods */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Shipping Methods</h2>
+          <div className="space-y-4">
+            {shippingMethods.map((method) => (
+              <div
+                key={method.id}
+                className="flex items-center justify-between bg-white border rounded-lg shadow-sm p-4"
               >
-                <option value="">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedMethod.includes(method.id)}
+                    onChange={() => handleSelectMethod(method.id)}
+                    className="form-checkbox h-5 w-5 text-indigo-600"
+                  />
+                  <div className="ml-4">
+                    <div className="text-lg font-semibold">{method.name}</div>
+                    <div className="text-sm text-gray-500">Rate: ₹{method.rate}</div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={method.enabled}
+                      onChange={() => toggleShippingMethod(method.id)}
+                      className="form-checkbox h-5 w-5 text-indigo-600"
+                    />
+                    <span className="text-gray-700">Enabled</span>
+                  </label>
+                  <button
+                    onClick={() => removeShippingMethod(method.id)}
+                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
 
-            {/* Product Table */}
-            <div className="overflow-x-auto bg-white rounded-lg shadow-md mb-4">
-              <table className="w-full table-auto text-left">
-                <thead className="bg-indigo-600 text-white">
-                  <tr>
-                    <th className="py-2 px-3 text-sm font-semibold">
-                      Product Name
-                    </th>
-                    <th className="py-2 px-3 text-sm font-semibold">Price</th>
-                    <th className="py-2 px-3 text-sm font-semibold">Stock</th>
-                    <th className="py-2 px-3 text-sm font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.length > 0 ? (
-                    filteredProducts.map((product) => (
-                      <tr key={product.id} className="hover:bg-gray-50">
-                        <td className="py-2 px-3">{product.name}</td>
-                        <td className="py-2 px-3">${product.price}</td>
-                        <td className="py-2 px-3">{product.stock}</td>
-                        <td className="py-2 px-3 flex items-center space-x-2">
-                          <button
-                            onClick={() => setEditingProduct(product)}
-                            className="text-blue-500 hover:text-blue-700"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProduct(product.id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="4"
-                        className="py-2 px-3 text-center text-gray-500"
-                      >
-                        No products found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Close Modal Button */}
-            <div className="flex justify-end">
-              <button
-                onClick={() => setModalVisible(false)}
-                className="bg-gray-500 text-white py-2 px-6 rounded-lg shadow-md hover:bg-gray-600"
-              >
-                Close
-              </button>
-            </div>
+          {/* Add Shipping Method */}
+          <div className="mt-6 flex items-center space-x-4">
+            <input
+              type="text"
+              value={newMethodName}
+              onChange={(e) => setNewMethodName(e.target.value)}
+              placeholder="New Shipping Method"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+            />
+            <input
+              type="number"
+              value={newMethodRate}
+              onChange={(e) => setNewMethodRate(parseFloat(e.target.value))}
+              placeholder="Rate (₹)"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-32"
+            />
+            <button
+              onClick={addShippingMethod}
+              className="bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 focus:outline-none"
+            >
+              Add Method
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Right Column - Shipping Regions */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Shipping Regions</h2>
+          <div className="space-y-4">
+            {regions.map((region) => (
+              <div
+                key={region.id}
+                className="flex items-center justify-between bg-white border rounded-lg shadow-sm p-4"
+              >
+                <div>
+                  <div className="text-lg font-semibold">{region.region}</div>
+                  <div className="text-sm text-gray-500">Shipping Cost: ₹{region.shippingCost}</div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={() => removeRegion(region.id)}
+                    className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Add Region */}
+          <div className="mt-6 flex items-center space-x-4">
+            <input
+              type="text"
+              value={newRegion}
+              onChange={(e) => setNewRegion(e.target.value)}
+              placeholder="Region Name (e.g. Delhi)"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+            />
+            <input
+              type="number"
+              value={newRegionCost}
+              onChange={(e) => setNewRegionCost(parseFloat(e.target.value))}
+              placeholder="Shipping Cost (₹)"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-32"
+            />
+            <button
+              onClick={addRegion}
+              className="bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 focus:outline-none"
+            >
+              Add Region
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
-}
+};
 
-export default Products;
+export default ShippingSettings;

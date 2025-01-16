@@ -1,187 +1,232 @@
 import React, { useState } from "react";
-import ProductForm from "../pages/ProductForm"; // Assuming you have a form for adding/editing products
 
-function Products() {
-  const [products, setProducts] = useState([
+const PaymentMethods = () => {
+  const [paymentMethods, setPaymentMethods] = useState([
     {
       id: 1,
-      name: "Product 1",
-      price: 100,
-      description: "Description 1",
-      stock: 50,
-      category: "Electronics",
-      visible: true,
-      sku: "P001",
-      discountPrice: null,
-      rating: 4.5,
-      image: "/path/to/image1.jpg",
-      tags: ["New", "Popular"],
+      name: "Credit Card",
+      enabled: true,
+      category: "Credit",
+      description: "Standard credit card payment.",
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
     {
       id: 2,
-      name: "Product 2",
-      price: 150,
-      description: "Description 2",
-      stock: 30,
-      category: "Clothing",
-      visible: true,
-      sku: "P002",
-      discountPrice: 130,
-      rating: 4.0,
-      image: "/path/to/image2.jpg",
-      tags: ["Sale", "Limited Edition"],
+      name: "PayPal",
+      enabled: true,
+      category: "Wallet",
+      description: "Payment via PayPal account.",
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
-    // Add more products here
+    {
+      id: 3,
+      name: "Bank Transfer",
+      enabled: false,
+      category: "Bank",
+      description: "Direct bank transfer.",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
   ]);
 
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [searchQuery, setSearchQuery] = useState(""); // For search/filter functionality
-  const [categoryFilter, setCategoryFilter] = useState(""); // Filter by category
-  const [modalVisible, setModalVisible] = useState(false); // Show/hide modal for product list
+  const [newMethodName, setNewMethodName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isRemoving, setIsRemoving] = useState(null);
+  const [selectedMethods, setSelectedMethods] = useState([]);
 
-  const categories = ["Electronics", "Clothing", "Home Appliances", "Sports"]; // Example categories
-
-  // Add product
-  const handleAddProduct = (productData) => {
-    setProducts([...products, { ...productData, id: products.length + 1 }]);
-  };
-
-  // Edit product
-  const handleEditProduct = (productData) => {
-    const updatedProducts = products.map((product) =>
-      product.id === productData.id ? productData : product
+  const togglePaymentMethod = (id) => {
+    setPaymentMethods((prevMethods) =>
+      prevMethods.map((method) =>
+        method.id === id
+          ? { ...method, enabled: !method.enabled, updatedAt: new Date() }
+          : method
+      )
     );
-    setProducts(updatedProducts);
-    setEditingProduct(null);
   };
 
-  // Delete product
-  const handleDeleteProduct = (productId) => {
-    setProducts(products.filter((product) => product.id !== productId));
+  const addPaymentMethod = () => {
+    if (newMethodName) {
+      const newMethod = {
+        id: paymentMethods.length + 1,
+        name: newMethodName,
+        enabled: false,
+        category: "Credit",
+        description: "",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      setPaymentMethods([...paymentMethods, newMethod]);
+      setNewMethodName(""); // Clear input field
+    }
   };
 
-  // Filter products based on the search query and category
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      (categoryFilter ? product.category === categoryFilter : true)
+  const handleRemove = (id) => {
+    setIsRemoving(id); // Set id to show confirmation
+  };
+
+  const confirmRemove = () => {
+    setPaymentMethods(
+      paymentMethods.filter((method) => method.id !== isRemoving)
+    );
+    setIsRemoving(null); // Reset the id after removal
+  };
+
+  const cancelRemove = () => {
+    setIsRemoving(null); // Cancel removal
+  };
+
+  const handleSearch = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const filteredMethods = paymentMethods.filter((method) =>
+    method.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleBulkEnable = () => {
+    const updatedMethods = paymentMethods.map((method) => ({
+      ...method,
+      enabled: true,
+      updatedAt: new Date(),
+    }));
+    setPaymentMethods(updatedMethods);
+  };
+
+  const handleBulkDisable = () => {
+    const updatedMethods = paymentMethods.map((method) => ({
+      ...method,
+      enabled: false,
+      updatedAt: new Date(),
+    }));
+    setPaymentMethods(updatedMethods);
+  };
+
+  const handleSelectMethod = (id) => {
+    if (selectedMethods.includes(id)) {
+      setSelectedMethods(selectedMethods.filter((methodId) => methodId !== id));
+    } else {
+      setSelectedMethods([...selectedMethods, id]);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Product Form Title and Show Product List Button in same row */}
-      <div className="flex justify-between items-center bg-white p-2 rounded-lg shadow-md mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">
-          {editingProduct ? "Edit Product" : "Add New Product"}
-        </h2>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">
+        Manage Payment Methods
+      </h1>
+
+      {/* Search Bar */}
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={handleSearch}
+          placeholder="Search Payment Methods"
+          className="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        {/* Bulk Enable/Disable */}
+        <div className="flex space-x-4">
+          <button
+            onClick={handleBulkEnable}
+            className="bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 focus:outline-none"
+          >
+            Enable Selected
+          </button>
+          <button
+            onClick={handleBulkDisable}
+            className="bg-gray-500 text-white px-6 py-3 rounded-md hover:bg-gray-600 focus:outline-none"
+          >
+            Disable Selected
+          </button>
+        </div>
+      </div>
+
+      {/* Grid Layout for Payment Methods */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredMethods.map((method) => (
+          <div
+            key={method.id}
+            className="flex flex-col bg-white border rounded-lg shadow-sm p-4"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <input
+                type="checkbox"
+                checked={selectedMethods.includes(method.id)}
+                onChange={() => handleSelectMethod(method.id)}
+                className="form-checkbox h-5 w-5 text-indigo-600"
+              />
+              <div className="text-xl font-semibold">{method.name}</div>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-gray-500">{method.category}</p>
+              <p className="text-sm text-gray-500">{method.description}</p>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={method.enabled}
+                  onChange={() => togglePaymentMethod(method.id)}
+                  className="form-checkbox h-5 w-5 text-indigo-600"
+                />
+                <span className="text-gray-700">Enabled</span>
+              </label>
+              <button
+                onClick={() => handleRemove(method.id)}
+                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none"
+              >
+                Remove
+              </button>
+            </div>
+
+            <div className="text-xs text-gray-400 mt-4">
+              <p>Created At: {method.createdAt.toLocaleDateString()}</p>
+              <p>Last Updated: {method.updatedAt.toLocaleDateString()}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Add New Payment Method */}
+      <div className="mt-6 flex items-center space-x-4">
+        <input
+          type="text"
+          value={newMethodName}
+          onChange={(e) => setNewMethodName(e.target.value)}
+          placeholder="Enter new payment method"
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-1/2"
+        />
         <button
-          className="p-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition duration-200"
-          onClick={() => setModalVisible(true)}
+          onClick={addPaymentMethod}
+          className="bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 focus:outline-none"
         >
-          Show Product List
+          Add Payment Method
         </button>
       </div>
 
-      {/* Product Form */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-4">
-        <ProductForm
-          onSubmit={editingProduct ? handleEditProduct : handleAddProduct}
-          existingProduct={editingProduct}
-        />
-      </div>
-
-      {/* Product List Modal Title */}
-      {modalVisible && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-          <div className="bg-white p-4 rounded-lg shadow-lg max-w-3xl w-full">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Product List
+      {/* Confirmation Dialog */}
+      {isRemoving !== null && (
+        <div className="fixed inset-0 bg-gray-700 bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">
+              Are you sure you want to remove this payment method?
             </h2>
-
-            {/* Search Bar for Product List */}
-            <div className="flex justify-between items-center mb-4">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search products..."
-                className="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            {/* Category Filter */}
-            <div className="flex justify-between items-center mb-4">
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full sm:w-1/3 p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Product Table */}
-            <div className="overflow-x-auto bg-white rounded-lg shadow-md mb-4">
-              <table className="w-full table-auto text-left">
-                <thead className="bg-indigo-600 text-white">
-                  <tr>
-                    <th className="py-2 px-3 text-sm font-semibold">
-                      Product Name
-                    </th>
-                    <th className="py-2 px-3 text-sm font-semibold">Price</th>
-                    <th className="py-2 px-3 text-sm font-semibold">Stock</th>
-                    <th className="py-2 px-3 text-sm font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.length > 0 ? (
-                    filteredProducts.map((product) => (
-                      <tr key={product.id} className="hover:bg-gray-50">
-                        <td className="py-2 px-3">{product.name}</td>
-                        <td className="py-2 px-3">${product.price}</td>
-                        <td className="py-2 px-3">{product.stock}</td>
-                        <td className="py-2 px-3 flex items-center space-x-2">
-                          <button
-                            onClick={() => setEditingProduct(product)}
-                            className="text-blue-500 hover:text-blue-700"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProduct(product.id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="4"
-                        className="py-2 px-3 text-center text-gray-500"
-                      >
-                        No products found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Close Modal Button */}
-            <div className="flex justify-end">
+            <div className="flex space-x-4">
               <button
-                onClick={() => setModalVisible(false)}
-                className="bg-gray-500 text-white py-2 px-6 rounded-lg shadow-md hover:bg-gray-600"
+                onClick={confirmRemove}
+                className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
               >
-                Close
+                Yes, Remove
+              </button>
+              <button
+                onClick={cancelRemove}
+                className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+              >
+                Cancel
               </button>
             </div>
           </div>
@@ -189,6 +234,6 @@ function Products() {
       )}
     </div>
   );
-}
+};
 
-export default Products;
+export default PaymentMethods;

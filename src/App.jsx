@@ -18,6 +18,7 @@ import Vendors from "./components/Vendors";
 import Payments from "./pages/payments";
 import Shipping from "./pages/shipping";
 import Reports from "./pages/reports";
+import { AuthProvider } from "./components/auth";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

@@ -1,42 +1,11 @@
 import React, { useState, useEffect } from "react";
 import ProductForm from "../pages/ProductForm"; // Assuming you have a form for adding/editing products
-import { collection, addDoc, setDoc, doc, deleteDoc } from "firebase/firestore"; 
-import { db } from"./firebase";
-import { useAuth } from "../components/auth"; 
+import { collection, addDoc, setDoc, doc, deleteDoc,getDocs } from "firebase/firestore";
+import { db } from "./firebase";
+import { useAuth } from "../components/auth";
 
 function Products() {
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "Product 1",
-      price: 100,
-      description: "Description 1",
-      stock: 50,
-      category: "Electronics",
-      visible: true,
-      sku: "P001",
-      discountPrice: null,
-      rating: 4.5,
-      image: "/path/to/image1.jpg",
-      tags: ["New", "Popular"],
-    },
-    {
-      id: 2,
-      name: "Product 2",
-      price: 150,
-      description: "Description 2",
-      stock: 30,
-      category: "Clothing",
-      visible: true,
-      sku: "P002",
-      discountPrice: 130,
-      rating: 4.0,
-      image: "/path/to/image2.jpg",
-      tags: ["Sale", "Limited Edition"],
-    },
-    // Add more products here
-  ]);
-
+  const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchQuery, setSearchQuery] = useState(""); // For search/filter functionality
   const [categoryFilter, setCategoryFilter] = useState(""); // Filter by category
@@ -47,7 +16,27 @@ function Products() {
   const currentUser = useAuth(); // Get the current user
   const sanitizedEmail = currentUser?.email?.replace(/\s/g, "_");
 
+  useEffect(() => {
+    // Fetch products from Firebase and update the local state
+    const fetchProducts = async () => {
+      try {
+        const querySnapshot = await getDocs(
+          collection(db, "admin", sanitizedEmail, "Products")
+        );
+        const fetchedProducts = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setProducts(fetchedProducts);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
 
+    if (sanitizedEmail) {
+      fetchProducts();
+    }
+  }, [sanitizedEmail]);
 
   const filteredProducts = products.filter(
     (product) =>
@@ -59,12 +48,11 @@ function Products() {
     try {
       const collectionRef = collection(db, "admin", sanitizedEmail, "Products");
       const docRef = await addDoc(collectionRef, productData);
-      setProducts([
-        ...products,
-        { ...productData, id: docRef.id },
-      ]);
+      setProducts([...products, { ...productData, id: docRef.id }]);
+      alert("Product added successfully!");
     } catch (error) {
       console.error("Error adding product:", error);
+      alert("Failed to add product. Please try again.");
     }
   };
 
@@ -77,8 +65,10 @@ function Products() {
       );
       setProducts(updatedProducts);
       setEditingProduct(null);
+      alert("Product updated successfully!");
     } catch (error) {
       console.error("Error updating product:", error);
+      alert("Failed to update product. Please try again.");
     }
   };
 
@@ -87,11 +77,12 @@ function Products() {
       const docRef = doc(db, "admin", sanitizedEmail, "Products", productId);
       await deleteDoc(docRef);
       setProducts(products.filter((product) => product.id !== productId));
+      alert("Product deleted successfully!");
     } catch (error) {
       console.error("Error deleting product:", error);
+      alert("Failed to delete product. Please try again.");
     }
   };
-
 
   return (
     <div className="space-y-6">

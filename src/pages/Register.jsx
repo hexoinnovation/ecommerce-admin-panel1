@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../components/firebse"; // Adjust the import path based on your project structure
+import { auth } from "../components/firebase"; // Adjust the import path based on your project structure
 import { createUserWithEmailAndPassword } from "firebase/auth";
 
 function Register() {
@@ -51,7 +51,7 @@ function Register() {
       }
     }
   };
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-r from-blue-200 to-blue-900 flex items-center justify-center px-4">
       <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white rounded-xl shadow-xl">

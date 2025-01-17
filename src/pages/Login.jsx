@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth, signInWithEmailAndPassword } from "../components/firebse"; // Import Firebase auth methods
+import { auth, signInWithEmailAndPassword } from "../components/firebase"; // Import Firebase auth methods
 
 function Login({ setIsAuthenticated }) {
   const [email, setEmail] = useState("");

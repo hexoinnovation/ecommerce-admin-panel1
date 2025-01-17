@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ProductForm from "../pages/ProductForm"; // Assuming you have a form for adding/editing products
+import { collection, addDoc, setDoc, doc, deleteDoc } from "firebase/firestore"; 
+import { db } from"./firebase";
+import { useAuth } from "../components/auth"; 
 
 function Products() {
   const [products, setProducts] = useState([
@@ -41,31 +44,54 @@ function Products() {
 
   const categories = ["Electronics", "Clothing", "Home Appliances", "Sports"]; // Example categories
 
-  // Add product
-  const handleAddProduct = (productData) => {
-    setProducts([...products, { ...productData, id: products.length + 1 }]);
-  };
+  const currentUser = useAuth(); // Get the current user
+  const sanitizedEmail = currentUser?.email?.replace(/\s/g, "_");
 
-  // Edit product
-  const handleEditProduct = (productData) => {
-    const updatedProducts = products.map((product) =>
-      product.id === productData.id ? productData : product
-    );
-    setProducts(updatedProducts);
-    setEditingProduct(null);
-  };
 
-  // Delete product
-  const handleDeleteProduct = (productId) => {
-    setProducts(products.filter((product) => product.id !== productId));
-  };
 
-  // Filter products based on the search query and category
   const filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
       (categoryFilter ? product.category === categoryFilter : true)
   );
+
+  const handleAddProduct = async (productData) => {
+    try {
+      const collectionRef = collection(db, "admin", sanitizedEmail, "Products");
+      const docRef = await addDoc(collectionRef, productData);
+      setProducts([
+        ...products,
+        { ...productData, id: docRef.id },
+      ]);
+    } catch (error) {
+      console.error("Error adding product:", error);
+    }
+  };
+
+  const handleEditProduct = async (productData) => {
+    try {
+      const docRef = doc(db, "admin", sanitizedEmail, "Products", productData.id);
+      await setDoc(docRef, productData);
+      const updatedProducts = products.map((product) =>
+        product.id === productData.id ? productData : product
+      );
+      setProducts(updatedProducts);
+      setEditingProduct(null);
+    } catch (error) {
+      console.error("Error updating product:", error);
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    try {
+      const docRef = doc(db, "admin", sanitizedEmail, "Products", productId);
+      await deleteDoc(docRef);
+      setProducts(products.filter((product) => product.id !== productId));
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
+  };
+
 
   return (
     <div className="space-y-6">

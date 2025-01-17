@@ -1,13 +1,13 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect } from "react";
 import { CSVLink } from "react-csv"; // For exporting CSV
 import { FaPlusCircle, FaFileExport, FaTrashAlt, FaEdit, FaUpload } from "react-icons/fa"; // Icons for actions
 import Papa from "papaparse"; // Import papaparse for CSV parsing
+import { collection, addDoc,getDocs } from "firebase/firestore";
+import { db } from "./firebase";
 
 function Categories() {
   const [categories, setCategories] = useState([
-    { id: 1, name: "Electronics" },
-    { id: 2, name: "Fashion" },
-    { id: 3, name: "Home & Kitchen" },
+   
   ]);
   const [categoryName, setCategoryName] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,14 +15,47 @@ function Categories() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [file, setFile] = useState(null); // To store the uploaded file
+  const [filteredCategorie, setFilteredCategories] = useState([]);
 
-  // Handle adding new category
-  const handleAddCategory = () => {
+ // Fetch categories on component mount
+ useEffect(() => {
+  const fetchCategories = async () => {
+    try {
+      const categoriesCollectionRef = collection(db, "Categories");
+      const querySnapshot = await getDocs(categoriesCollectionRef);
+      const categoriesList = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setCategories(categoriesList);
+      setFilteredCategories(categoriesList); // Assuming you want to display all initially
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  fetchCategories();
+}, []);
+
+  const handleAddCategory = async () => {
     if (!categoryName.trim()) return;
-    const newCategory = { id: categories.length + 1, name: categoryName };
-    setCategories([...categories, newCategory]);
-    setCategoryName("");
-    setIsModalOpen(false);
+  
+    try {
+      // Path: "Categories" collection at the root level
+      const categoriesCollectionRef = collection(db, "Categories");
+  
+      // Add the new category to Firestore
+      const docRef = await addDoc(categoriesCollectionRef, { name: categoryName });
+      console.log("Category added with ID:", docRef.id);
+  
+      // Update local state (if you want to reflect the added category in the UI)
+      const newCategory = { id: docRef.id, name: categoryName }; // Use Firestore-generated ID
+      setCategories([...categories, newCategory]);
+      setCategoryName("");
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Error adding category:", error);
+    }
   };
 
   // Handle deleting a category
@@ -135,8 +168,8 @@ function Categories() {
         </button>
       )}
 
-      {/* Categories Table */}
-      <table className="min-w-full bg-white shadow-lg rounded-lg overflow-hidden">
+     {/* Categories Table */}
+     <table className="min-w-full bg-white shadow-lg rounded-lg overflow-hidden">
         <thead className="bg-indigo-700 text-white">
           <tr>
             <th className="py-3 px-6 text-left">
@@ -184,7 +217,7 @@ function Categories() {
                   <FaEdit />
                 </button>
                 <button
-                  onClick={() => handleDeleteCategory(category.id)}
+                  onClick={() => handleDeleteCategory(category.id)} // You need to define handleDeleteCategory
                   className="text-red-600 hover:text-red-700"
                 >
                   <FaTrashAlt />

@@ -15,6 +15,7 @@ function Products() {
 
   const currentUser = useAuth(); // Get the current user
   const sanitizedEmail = currentUser?.email?.replace(/\s/g, "_");
+  const [filteredProduct, setFilteredProducts] = useState([]);
 
   useEffect(() => {
     // Fetch products from Firebase and update the local state
@@ -83,6 +84,30 @@ function Products() {
       alert("Failed to delete product. Please try again.");
     }
   };
+
+
+
+  
+  // Fetch products from Firestore
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        // Specify the path to your 'Products' collection
+        const productsCollectionRef = collection(db, "Products");
+        const productSnapshot = await getDocs(productsCollectionRef);
+        const productList = productSnapshot.docs.map((doc) => ({
+          id: doc.id, // Firestore-generated ID
+          ...doc.data()  // Data from the document
+        }));
+        setProducts(productList);
+        setFilteredProducts(productList); // You can add filtering logic here if needed
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   return (
     <div className="space-y-6">

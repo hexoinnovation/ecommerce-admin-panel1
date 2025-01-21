@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { collection, addDoc,getDocs,doc,getDoc} from "firebase/firestore";
+import { db } from "../components/firebase";
+
 
 function Dashboard() {
   const [currentDateTime, setCurrentDateTime] = useState(""); // State to store current date and time
@@ -17,6 +20,27 @@ function Dashboard() {
     // Cleanup the interval when the component is unmounted
     return () => clearInterval(intervalId);
   }, []);
+
+  const [products, setProducts] = useState([]);
+  const [productCount, setProductCount] = useState(0);
+
+  // Fetch products on component mount
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const collectionRef = collection(db, "Products");
+        const productSnapshot = await getDocs(collectionRef);
+        const productList = productSnapshot.docs.map((doc) => doc.data());
+        setProducts(productList);
+        setProductCount(productList.length); // Set the product count
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
 
   return (
     <div className="space-y-6">
@@ -38,9 +62,9 @@ function Dashboard() {
           <p className="text-3xl font-bold text-white">$24,500</p>
         </div>
         <div className="bg-gradient-to-r from-blue-400 to-blue-600 p-6 rounded-lg shadow-lg">
-          <h3 className="text-xl font-semibold text-white">Total Products</h3>
-          <p className="text-3xl font-bold text-white">150</p>
-        </div>
+      <h3 className="text-xl font-semibold text-white">Total Products</h3>
+      <p className="text-3xl font-bold text-white">{productCount}</p> {/* Display product count */}
+    </div>
         <div className="bg-gradient-to-r from-purple-400 to-purple-600 p-6 rounded-lg shadow-lg">
           <h3 className="text-xl font-semibold text-white">Total Orders</h3>
           <p className="text-3xl font-bold text-white">320</p>

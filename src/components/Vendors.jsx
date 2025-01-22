@@ -1,84 +1,84 @@
-import React, { useState } from "react";
+// src/components/Vendors.jsx
+import React, { useState, useEffect } from "react";
 import { CSVLink } from "react-csv"; // For exporting CSV
 import { FaPlusCircle, FaEdit, FaTrashAlt, FaFileExport } from "react-icons/fa"; // Icons for actions
+import { useAuth } from "./AuthContext"; 
+import { db } from "./firebase";
+import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, setDoc } from "firebase/firestore";
 
 function Vendors() {
-  const [vendors, setVendors] = useState([
-    {
-      id: 1,
-      name: "Vendor A",
-      email: "vendorA@example.com",
-      phone: "123-456-7890",
-      address: "123 Vendor St, City, Country",
-    },
-    {
-      id: 2,
-      name: "Vendor B",
-      email: "vendorB@example.com",
-      phone: "987-654-3210",
-      address: "456 Vendor Rd, City, Country",
-    },
-    // More vendors...
-  ]);
-
-  const [selectedVendors, setSelectedVendors] = useState([]); // Track selected vendors for bulk actions
-  const [vendorData, setVendorData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-  });
+  const [vendors, setVendors] = useState([]);
+  const [selectedVendors, setSelectedVendors] = useState([]);
+  const [vendorData, setVendorData] = useState({ name: "", email: "", phone: "", address: "" });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editVendorId, setEditVendorId] = useState(null); // Manage the vendor currently being edited
+  const [editVendorId, setEditVendorId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Handle adding new vendor
-  const handleAddVendor = () => {
-    const newVendor = {
-      id: vendors.length + 1,
-      name: vendorData.name,
-      email: vendorData.email,
-      phone: vendorData.phone,
-      address: vendorData.address,
-    };
-    setVendors([...vendors, newVendor]);
-    setVendorData({ name: "", email: "", phone: "", address: "" });
-    setIsModalOpen(false);
+  const { currentUser } = useAuth(); // Using auth from context
+
+  const fetchVendors = async () => {
+    if (currentUser) {
+      try {
+        const querySnapshot = await getDocs(collection(db, `admin/${currentUser.email}/Vendors`));
+        const vendorList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setVendors(vendorList);
+      } catch (error) {
+        console.error("Error fetching vendors:", error);
+      }
+    }
   };
 
-  // Handle editing vendor
-  const handleEditVendor = () => {
-    setVendors(
-      vendors.map((vendor) =>
-        vendor.id === editVendorId ? { ...vendor, ...vendorData } : vendor
-      )
-    );
-    setVendorData({ name: "", email: "", phone: "", address: "" });
-    setEditVendorId(null);
-    setIsModalOpen(false);
+  useEffect(() => {
+    if (currentUser) {
+      fetchVendors();
+    }
+  }, [currentUser]);
+
+  const handleAddVendor = async () => {
+    try {
+      const vendorRef = doc(db, `admin/${currentUser.email}/Vendors`, vendorData.id);
+      await setDoc(vendorRef, vendorData);
+      setIsModalOpen(false);
+      fetchVendors(); // Refresh vendor list after adding
+    } catch (error) {
+      console.error("Error adding vendor: ", error);
+    }
   };
 
-  // Handle deleting a vendor
-  const handleDeleteVendor = (vendorId) => {
-    setVendors(vendors.filter((vendor) => vendor.id !== vendorId));
+  const handleEditVendor = async () => {
+    try {
+      const vendorRef = doc(db, `admin/${currentUser.email}/Vendors/${editVendorId}`);
+      await updateDoc(vendorRef, vendorData);
+      setIsModalOpen(false);
+      fetchVendors(); // Refresh vendor list after editing
+    } catch (error) {
+      console.error("Error updating vendor: ", error);
+    }
   };
 
-  // Handle bulk delete of selected vendors
+  const handleDeleteVendor = async (vendorId) => {
+    try {
+      const vendorRef = doc(db, `admin/${currentUser.email}/Vendors/${vendorId}`);
+      await deleteDoc(vendorRef);
+      fetchVendors(); // Refresh vendor list after deleting
+    } catch (error) {
+      console.error("Error deleting vendor: ", error);
+    }
+  };
+
   const handleBulkDelete = () => {
-    setVendors(
-      vendors.filter((vendor) => !selectedVendors.includes(vendor.id))
-    );
+    selectedVendors.forEach(async (vendorId) => {
+      await handleDeleteVendor(vendorId);
+    });
     setSelectedVendors([]); // Clear selection after bulk deletion
   };
 
-  // Handle search input change
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
 
-  // Filtered vendors based on search query
   const filteredVendors = vendors.filter(
     (vendor) =>
       vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -86,33 +86,22 @@ function Vendors() {
       vendor.phone.includes(searchQuery)
   );
 
-  // Handle vendor selection for bulk actions
   const handleVendorSelection = (vendorId) => {
     setSelectedVendors((prev) =>
-      prev.includes(vendorId)
-        ? prev.filter((id) => id !== vendorId)
-        : [...prev, vendorId]
+      prev.includes(vendorId) ? prev.filter((id) => id !== vendorId) : [...prev, vendorId]
     );
   };
 
-  // Handle input change for vendor form
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setVendorData({ ...vendorData, [name]: value });
   };
 
-  // Paginated vendors
   const indexOfLastVendor = currentPage * itemsPerPage;
   const indexOfFirstVendor = indexOfLastVendor - itemsPerPage;
-  const currentVendors = filteredVendors.slice(
-    indexOfFirstVendor,
-    indexOfLastVendor
-  );
+  const currentVendors = filteredVendors.slice(indexOfFirstVendor, indexOfLastVendor);
 
-  // Handle next page
   const handleNextPage = () => setCurrentPage(currentPage + 1);
-
-  // Handle previous page
   const handlePrevPage = () => setCurrentPage(currentPage - 1);
 
   return (
@@ -195,25 +184,20 @@ function Vendors() {
               <td className="py-3 px-6">{vendor.email}</td>
               <td className="py-3 px-6">{vendor.phone}</td>
               <td className="py-3 px-6">{vendor.address}</td>
-              <td className="py-3 px-6 flex space-x-2">
+              <td className="py-3 px-6">
                 <button
                   onClick={() => {
-                    setVendorData({
-                      name: vendor.name,
-                      email: vendor.email,
-                      phone: vendor.phone,
-                      address: vendor.address,
-                    });
                     setEditVendorId(vendor.id);
+                    setVendorData({ ...vendor });
                     setIsModalOpen(true);
                   }}
-                  className="text-yellow-500 hover:text-yellow-600"
+                  className="text-yellow-500 hover:text-yellow-700 mr-2"
                 >
                   <FaEdit />
                 </button>
                 <button
                   onClick={() => handleDeleteVendor(vendor.id)}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-red-500 hover:text-red-700"
                 >
                   <FaTrashAlt />
                 </button>
@@ -223,86 +207,23 @@ function Vendors() {
         </tbody>
       </table>
 
-      {/* Pagination Controls */}
-      <div className="flex justify-between mt-4">
+      {/* Pagination */}
+      <div className="flex justify-between items-center mt-4">
         <button
           onClick={handlePrevPage}
           disabled={currentPage === 1}
-          className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-300"
         >
-          Previous
+          Prev
         </button>
-        <span className="self-center text-lg text-gray-700">
-          Page {currentPage} of{" "}
-          {Math.ceil(filteredVendors.length / itemsPerPage)}
-        </span>
         <button
           onClick={handleNextPage}
-          disabled={
-            currentPage === Math.ceil(filteredVendors.length / itemsPerPage)
-          }
-          className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200"
+          disabled={indexOfLastVendor >= filteredVendors.length}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-300"
         >
           Next
         </button>
       </div>
-
-      {/* Modal for Adding and Editing Vendor */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-2xl font-semibold mb-4">
-              {editVendorId ? "Edit Vendor" : "Add New Vendor"}
-            </h3>
-            <input
-              type="text"
-              name="name"
-              value={vendorData.name}
-              onChange={handleInputChange}
-              className="w-full p-3 border border-gray-300 rounded-lg mb-4"
-              placeholder="Enter vendor name"
-            />
-            <input
-              type="email"
-              name="email"
-              value={vendorData.email}
-              onChange={handleInputChange}
-              className="w-full p-3 border border-gray-300 rounded-lg mb-4"
-              placeholder="Enter vendor email"
-            />
-            <input
-              type="text"
-              name="phone"
-              value={vendorData.phone}
-              onChange={handleInputChange}
-              className="w-full p-3 border border-gray-300 rounded-lg mb-4"
-              placeholder="Enter vendor phone"
-            />
-            <input
-              type="text"
-              name="address"
-              value={vendorData.address}
-              onChange={handleInputChange}
-              className="w-full p-3 border border-gray-300 rounded-lg mb-4"
-              placeholder="Enter vendor address"
-            />
-            <div className="flex justify-between">
-              <button
-                onClick={editVendorId ? handleEditVendor : handleAddVendor}
-                className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200"
-              >
-                {editVendorId ? "Update Vendor" : "Add Vendor"}
-              </button>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="bg-gray-400 text-white py-2 px-4 rounded-lg hover:bg-gray-500 transition duration-200"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

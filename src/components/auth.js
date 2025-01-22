@@ -23,14 +23,27 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
   const value = {
     currentUser,
-    login: (email, password) => signInWithEmailAndPassword(auth, email, password),
-    logout: () => signOut(auth),
+    login: async (email, password) => {
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        console.error("Login error:", error.message);
+        throw error; // Handle error in UI
+      }
+    },
+    logout: async () => {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Logout error:", error.message);
+        throw error; // Handle error in UI
+      }
+    },
   };
 
   return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;

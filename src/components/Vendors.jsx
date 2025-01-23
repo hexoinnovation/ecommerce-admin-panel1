@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { CSVLink } from "react-csv"; // For exporting CSV
 import { FaPlusCircle, FaEdit, FaTrashAlt, FaFileExport } from "react-icons/fa"; // Icons for actions
-import { useAuth } from "./AuthContext"; 
 import { db } from "./firebase";
 import { collection, addDoc, getDocs, doc, deleteDoc, updateDoc, setDoc } from "firebase/firestore";
+import { useAuth } from "./auth"; 
 
 function Vendors() {
   const [vendors, setVendors] = useState([]);
@@ -16,19 +16,7 @@ function Vendors() {
   const [itemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { currentUser } = useAuth(); // Using auth from context
-
-  const fetchVendors = async () => {
-    if (currentUser) {
-      try {
-        const querySnapshot = await getDocs(collection(db, `admin/${currentUser.email}/Vendors`));
-        const vendorList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setVendors(vendorList);
-      } catch (error) {
-        console.error("Error fetching vendors:", error);
-      }
-    }
-  };
+  const { currentUser } = useAuth(); // Get the authenticated user
 
   useEffect(() => {
     if (currentUser) {
@@ -36,43 +24,69 @@ function Vendors() {
     }
   }, [currentUser]);
 
-  const handleAddVendor = async () => {
+  // Fetch Vendors from Firebase
+  const fetchVendors = async () => {
+    if (!currentUser) return;
+
     try {
-      const vendorRef = doc(db, `admin/${currentUser.email}/Vendors`, vendorData.id);
-      await setDoc(vendorRef, vendorData);
-      setIsModalOpen(false);
-      fetchVendors(); // Refresh vendor list after adding
+      const emailPath = currentUser.email.replace(/\./g, "_");
+      const vendorCollection = collection(db, `admin/${emailPath}/Vendors`);
+      const querySnapshot = await getDocs(vendorCollection);
+      const vendorList = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setVendors(vendorList);
     } catch (error) {
-      console.error("Error adding vendor: ", error);
+      console.error("Error fetching vendors:", error);
     }
   };
 
-  const handleEditVendor = async () => {
+  // Add Vendor
+  const handleAddVendor = async () => {
+    if (!currentUser) return;
+
     try {
-      const vendorRef = doc(db, `admin/${currentUser.email}/Vendors/${editVendorId}`);
+      const emailPath = currentUser.email.replace(/\./g, "_");
+      const vendorCollection = collection(db, `admin/${emailPath}/Vendors`);
+      await addDoc(vendorCollection, vendorData);
+      setIsModalOpen(false);
+      fetchVendors();
+    } catch (error) {
+      console.error("Error adding vendor:", error);
+    }
+  };
+
+  // Edit Vendor
+  const handleEditVendor = async () => {
+    if (!currentUser) return;
+
+    try {
+      const emailPath = currentUser.email.replace(/\./g, "_");
+      const vendorRef = doc(db, `admin/${emailPath}/Vendors/${editVendorId}`);
       await updateDoc(vendorRef, vendorData);
       setIsModalOpen(false);
-      fetchVendors(); // Refresh vendor list after editing
+      fetchVendors();
     } catch (error) {
-      console.error("Error updating vendor: ", error);
+      console.error("Error updating vendor:", error);
     }
   };
 
+  // Delete Vendor
   const handleDeleteVendor = async (vendorId) => {
+    if (!currentUser) return;
+
     try {
-      const vendorRef = doc(db, `admin/${currentUser.email}/Vendors/${vendorId}`);
+      const emailPath = currentUser.email.replace(/\./g, "_");
+      const vendorRef = doc(db, `admin/${emailPath}/Vendors/${vendorId}`);
       await deleteDoc(vendorRef);
-      fetchVendors(); // Refresh vendor list after deleting
+      fetchVendors();
     } catch (error) {
-      console.error("Error deleting vendor: ", error);
+      console.error("Error deleting vendor:", error);
     }
   };
 
-  const handleBulkDelete = () => {
-    selectedVendors.forEach(async (vendorId) => {
-      await handleDeleteVendor(vendorId);
-    });
-    setSelectedVendors([]); // Clear selection after bulk deletion
+  // Remaining methods for handling input, search, pagination, etc., are unchanged
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setVendorData({ ...vendorData, [name]: value });
   };
 
   const handleSearchChange = (e) => {
@@ -86,23 +100,34 @@ function Vendors() {
       vendor.phone.includes(searchQuery)
   );
 
-  const handleVendorSelection = (vendorId) => {
-    setSelectedVendors((prev) =>
-      prev.includes(vendorId) ? prev.filter((id) => id !== vendorId) : [...prev, vendorId]
-    );
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setVendorData({ ...vendorData, [name]: value });
-  };
-
   const indexOfLastVendor = currentPage * itemsPerPage;
   const indexOfFirstVendor = indexOfLastVendor - itemsPerPage;
   const currentVendors = filteredVendors.slice(indexOfFirstVendor, indexOfLastVendor);
 
   const handleNextPage = () => setCurrentPage(currentPage + 1);
   const handlePrevPage = () => setCurrentPage(currentPage - 1);
+
+  if (!currentUser) {
+    return <div className="text-red-500">Error: User not authenticated</div>;
+  }
+
+  const handleBulkDelete = () => {
+    selectedVendors.forEach(async (vendorId) => {
+      await handleDeleteVendor(vendorId);
+    });
+    setSelectedVendors([]);
+  };
+
+ 
+
+  const handleVendorSelection = (vendorId) => {
+    setSelectedVendors((prev) =>
+      prev.includes(vendorId) ? prev.filter((id) => id !== vendorId) : [...prev, vendorId]
+    );
+  };
+  if (!currentUser) {
+    return <div className="text-red-500">Error: User not authenticated</div>;
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -121,7 +146,7 @@ function Vendors() {
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center"
+          className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 flex items-center"
         >
           <FaPlusCircle className="mr-2" />
           Add New Vendor
@@ -130,7 +155,7 @@ function Vendors() {
         <CSVLink
           data={vendors}
           filename={"vendors.csv"}
-          className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200 flex items-center"
+          className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 flex items-center"
         >
           <FaFileExport className="mr-2" />
           Export Data
@@ -141,7 +166,7 @@ function Vendors() {
       {selectedVendors.length > 0 && (
         <button
           onClick={handleBulkDelete}
-          className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition duration-200 mb-4"
+          className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700"
         >
           Delete Selected Vendors
         </button>
@@ -155,11 +180,7 @@ function Vendors() {
               <input
                 type="checkbox"
                 onChange={(e) => {
-                  if (e.target.checked) {
-                    setSelectedVendors(vendors.map((vendor) => vendor.id));
-                  } else {
-                    setSelectedVendors([]);
-                  }
+                  setSelectedVendors(e.target.checked ? vendors.map((v) => v.id) : []);
                 }}
               />
             </th>
@@ -208,22 +229,99 @@ function Vendors() {
       </table>
 
       {/* Pagination */}
-      <div className="flex justify-between items-center mt-4">
+      <div className="flex justify-between items-center mt-6">
         <button
           onClick={handlePrevPage}
           disabled={currentPage === 1}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-300"
+          className={`py-2 px-4 rounded-lg ${
+            currentPage === 1 ? "bg-gray-300 text-gray-600" : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
         >
-          Prev
+          Previous
         </button>
+        <span className="text-gray-700">
+          Page {currentPage} of {Math.ceil(filteredVendors.length / itemsPerPage)}
+        </span>
         <button
           onClick={handleNextPage}
           disabled={indexOfLastVendor >= filteredVendors.length}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:bg-gray-300"
+          className={`py-2 px-4 rounded-lg ${
+            indexOfLastVendor >= filteredVendors.length
+              ? "bg-gray-300 text-gray-600"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
         >
           Next
         </button>
       </div>
+
+      {/* Vendor Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-2xl font-bold mb-4">
+              {editVendorId ? "Edit Vendor" : "Add Vendor"}
+            </h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                editVendorId ? handleEditVendor() : handleAddVendor();
+              }}
+            >
+              <input
+                type="text"
+                name="name"
+                value={vendorData.name}
+                onChange={handleInputChange}
+                placeholder="Vendor Name"
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4"
+                required
+              />
+              <input
+                type="email"
+                name="email"
+                value={vendorData.email}
+                onChange={handleInputChange}
+                placeholder="Email"
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4"
+                required
+              />
+              <input
+                type="text"
+                name="phone"
+                value={vendorData.phone}
+                onChange={handleInputChange}
+                placeholder="Phone"
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4"
+                required
+              />
+              <textarea
+                name="address"
+                value={vendorData.address}
+                onChange={handleInputChange}
+                placeholder="Address"
+                className="w-full p-3 border border-gray-300 rounded-lg mb-4"
+                rows="3"
+              ></textarea>
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="py-2 px-4 rounded-lg bg-gray-300 text-gray-700 hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="py-2 px-4 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  {editVendorId ? "Update" : "Add"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

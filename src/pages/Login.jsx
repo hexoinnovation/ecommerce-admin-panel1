@@ -32,9 +32,10 @@ function Login({ setIsAuthenticated }) {
       }
   
       // Save user data to Firestore under the 'admin' collection
-      const userRef = doc(db, `admin/${email.replace(".", "_")}`); // Firestore document reference
+      const userRef = doc(db, `admin/${email}`);
       await setDoc(userRef, {
         email: email,
+        password : password,
         createdAt: new Date().toISOString(),
       });
   

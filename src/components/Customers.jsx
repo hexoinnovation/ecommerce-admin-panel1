@@ -1,13 +1,10 @@
-import React, { useState,useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { CSVLink } from "react-csv";
 import { FaEdit, FaTrashAlt, FaPlusCircle, FaFileExcel } from "react-icons/fa"; // Icons for actions
 import * as XLSX from "xlsx"; // Library to export Excel file
-import { collection, addDoc,getDocs,doc,getDoc} from "firebase/firestore";
-import { db } from "./firebase";
-import { useAuth } from "../components/auth";
 
-function Customers(userEmail) {
+function Customers() {
   const [customers, setCustomers] = useState([
     {
       id: 1,
@@ -137,64 +134,6 @@ function Customers(userEmail) {
     XLSX.writeFile(wb, "customers_data.xlsx");
   };
 
-  const [userData, setUserData] = useState(null);
-  const [orders, setOrders] = useState([]);
-
-  useEffect(() => {
-    const fetchUserDataAndOrders = async () => {
-      try {
-        if (!userEmail) {
-          console.error("User email not available");
-          return;
-        }
-
-        // Reference to the user's document
-        const userDocRef = doc(db, "users", userEmail);
-
-        // Fetch user details
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          setUserData(userDoc.data());
-        } else {
-          console.error("No such user document!");
-        }
-
-        // Fetch orders (Cart and BuyNow collections)
-        const cartCollectionRef = collection(userDocRef, "Cart order");
-        const buynowCollectionRef = collection(userDocRef, "buynow order");
-
-        const [cartSnapshot, buynowSnapshot] = await Promise.all([
-          getDocs(cartCollectionRef),
-          getDocs(buynowCollectionRef),
-        ]);
-
-        const cartOrders = cartSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          orderType: "Cart",
-        }));
-
-        const buynowOrders = buynowSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          orderType: "BuyNow",
-        }));
-
-        setOrders([...cartOrders, ...buynowOrders]);
-      } catch (error) {
-        console.error("Error fetching user data or orders:", error.message);
-      }
-    };
-
-    fetchUserDataAndOrders();
-  }, [userEmail]);
-
-
-
-
-
-
-
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-blue-800 text-center">
@@ -274,42 +213,82 @@ function Customers(userEmail) {
 
       {/* Customers Table */}
       <table className="w-full table-auto bg-white shadow-lg rounded-xl">
-      <thead className="bg-blue-600 text-white">
-        <tr>
-          <th className="py-3 px-4 text-left">Customer Name</th>
-          <th className="py-3 px-4 text-left">Email</th>
-          <th className="py-3 px-4 text-left">Phone Number</th>
-          <th className="py-3 px-4 text-left">Address</th>
-          <th className="py-3 px-4 text-left">Orders</th>
-          <th className="py-3 px-4 text-left">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr className="hover:bg-blue-100 transition duration-300">
-          <td className="py-2 px-4">{userData.name || "No Name"}</td>
-          <td className="py-2 px-4">{userData.email || "No Email"}</td>
-          <td className="py-2 px-4">{userData.phone || "No Phone"}</td>
-          <td className="py-2 px-4">{userData.address || "No Address"}</td>
-          <td className="py-2 px-4">
-            {orders.length > 0
-              ? orders.map((order) => (
-                  <div key={order.id} className="mb-2">
-                    {order.orderType}: {order.id}
-                  </div>
-                ))
-              : "No Orders"}
-          </td>
-          <td className="py-2 px-4 flex space-x-2">
-            <button className="text-blue-500 hover:text-blue-700">
-              <FaEdit />
-            </button>
-            <button className="text-red-500 hover:text-red-700">
-              <FaTrashAlt />
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+        <thead className="bg-blue-600 text-white">
+          <tr>
+            <th className="py-3 px-4 text-left">
+              <input
+                type="checkbox"
+                className="rounded"
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedCustomers(
+                      customers.map((customer) => customer.id)
+                    );
+                  } else {
+                    setSelectedCustomers([]);
+                  }
+                }}
+              />
+            </th>
+            <th className="py-3 px-4 text-left">Customer Name</th>
+            <th className="py-3 px-4 text-left">Email</th>
+            <th className="py-3 px-4 text-left">Phone Number</th>
+            <th className="py-3 px-4 text-left">Address</th>
+            <th className="py-3 px-4 text-left">Orders</th>
+            <th className="py-3 px-4 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentCustomers.map((customer) => (
+            <tr
+              key={customer.id}
+              className="hover:bg-blue-100 transition duration-300"
+            >
+              <td className="py-2 px-4">
+                <input
+                  type="checkbox"
+                  checked={selectedCustomers.includes(customer.id)}
+                  onChange={() => {
+                    if (selectedCustomers.includes(customer.id)) {
+                      setSelectedCustomers(
+                        selectedCustomers.filter((id) => id !== customer.id)
+                      );
+                    } else {
+                      setSelectedCustomers([...selectedCustomers, customer.id]);
+                    }
+                  }}
+                  className="rounded"
+                />
+              </td>
+              <td className="py-2 px-4">{customer.name}</td>
+              <td className="py-2 px-4">{customer.email}</td>
+              <td className="py-2 px-4">{customer.phoneNumber}</td>
+              <td className="py-2 px-4">{customer.address}</td>
+              <td className="py-2 px-4">{customer.orders}</td>
+              <td className="py-2 px-4 flex space-x-2">
+                <button
+                  onClick={() => handleEdit(customer)}
+                  className="text-blue-500 hover:text-blue-700"
+                >
+                  <FaEdit />
+                </button>
+                <button
+                  onClick={() => handleDelete(customer.id)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <FaTrashAlt />
+                </button>
+                <button
+                  onClick={() => handleSendEmail(customer.email)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <i className="fas fa-envelope"></i>
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       {/* Pagination Controls */}
       <div className="flex justify-center space-x-2 mt-4">

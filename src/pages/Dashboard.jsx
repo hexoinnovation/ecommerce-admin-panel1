@@ -59,7 +59,7 @@ function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         <div className="bg-gradient-to-r from-green-400 to-green-600 p-6 rounded-lg shadow-lg">
           <h3 className="text-xl font-semibold text-white">Total Sales</h3>
-          <p className="text-3xl font-bold text-white">$24,500</p>
+          <p className="text-3xl font-bold text-white">₹24,500</p>
         </div>
         <div className="bg-gradient-to-r from-blue-400 to-blue-600 p-6 rounded-lg shadow-lg">
       <h3 className="text-xl font-semibold text-white">Total Products</h3>
@@ -75,7 +75,7 @@ function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 p-6 rounded-lg shadow-lg">
           <h3 className="text-xl font-semibold text-white">Total Revenue</h3>
-          <p className="text-3xl font-bold text-white">$12,500</p>
+          <p className="text-3xl font-bold text-white">₹12,500</p>
         </div>
         <div className="bg-gradient-to-r from-teal-400 to-teal-600 p-6 rounded-lg shadow-lg">
           <h3 className="text-xl font-semibold text-white">Active Users</h3>
@@ -104,7 +104,7 @@ function Dashboard() {
             <tr>
               <td className="py-2 px-4">#12345</td>
               <td className="py-2 px-4">John Doe</td>
-              <td className="py-2 px-4">$100</td>
+              <td className="py-2 px-4">₹100</td>
               <td className="py-2 px-4 text-green-600">Completed</td>
               <td className="py-2 px-4">
                 <button className="text-blue-500 hover:text-blue-700">
@@ -115,7 +115,7 @@ function Dashboard() {
             <tr>
               <td className="py-2 px-4">#12346</td>
               <td className="py-2 px-4">Jane Smith</td>
-              <td className="py-2 px-4">$200</td>
+              <td className="py-2 px-4">₹200</td>
               <td className="py-2 px-4 text-yellow-600">Pending</td>
               <td className="py-2 px-4">
                 <button className="text-blue-500 hover:text-blue-700">
@@ -126,7 +126,7 @@ function Dashboard() {
             <tr>
               <td className="py-2 px-4">#12347</td>
               <td className="py-2 px-4">Tom Jones</td>
-              <td className="py-2 px-4">$300</td>
+              <td className="py-2 px-4">₹300</td>
               <td className="py-2 px-4 text-red-600">Canceled</td>
               <td className="py-2 px-4">
                 <button className="text-blue-500 hover:text-blue-700">

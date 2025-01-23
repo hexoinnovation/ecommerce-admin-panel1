@@ -176,7 +176,10 @@ function Products() {
                       Product Name
                     </th>
                     <th className="py-2 px-3 text-sm font-semibold">Price</th>
+                    <th className="py-2 px-3 text-sm font-semibold">Discount Price
+                    </th>
                     <th className="py-2 px-3 text-sm font-semibold">Stock</th>
+                    <th className="py-2 px-3 text-sm font-semibold">Product Availability</th>
                     <th className="py-2 px-3 text-sm font-semibold">Actions</th>
                   </tr>
                 </thead>
@@ -185,8 +188,10 @@ function Products() {
                     filteredProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-gray-50">
                         <td className="py-2 px-3">{product.name}</td>
-                        <td className="py-2 px-3">${product.price}</td>
+                        <td className="py-2 px-3">₹{product.price}</td>
+                        <td className="py-2 px-3">₹{product.discountPrice}</td>
                         <td className="py-2 px-3">{product.stock}</td>
+                        <td className="py-2 px-3">{product.availability}</td>
                         <td className="py-2 px-3 flex items-center space-x-2">
                           <button
                             onClick={() => setEditingProduct(product)}

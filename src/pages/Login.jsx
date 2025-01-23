@@ -40,7 +40,7 @@ function Login({ setIsAuthenticated }) {
       });
   
       setIsAuthenticated(true); // Set user as authenticated
-      navigate("/admin"); // Redirect to /admin after successful login
+      navigate("/"); // Redirect to /admin after successful login
     } catch (err) {
       // Handle Firebase errors
       if (err.code === "auth/user-not-found") {

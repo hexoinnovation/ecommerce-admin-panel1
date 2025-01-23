@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useState,useEffect  } from "react";
 import { Link } from "react-router-dom";
 import { CSVLink } from "react-csv";
 import { FaEdit, FaTrashAlt, FaPlusCircle, FaFileExcel } from "react-icons/fa"; // Icons for actions
+import { collection, addDoc,getDocs,doc,getDoc,updateDoc,deleteDoc} from "firebase/firestore";
+import { db } from "../components/firebase";
 import * as XLSX from "xlsx"; // Library to export Excel file
+import { getAuth } from "firebase/auth"; // Import Firebase Auth
 
 function Customers() {
   const [customers, setCustomers] = useState([
@@ -46,14 +49,22 @@ function Customers() {
   const [selectedCustomers, setSelectedCustomers] = useState([]); // For bulk delete
   const [message, setMessage] = useState(""); // For showing messages like success/failure
 
-  const filteredCustomers = customers.filter(
-    (customer) =>
-      (customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.phoneNumber.includes(searchQuery)) &&
-      (statusFilter ? customer.status === statusFilter : true)
-  );
-
+  const filteredCustomers = customers.filter((customer) => {
+    // Fallbacks for missing or undefined properties
+    const name = customer?.name || "";
+    const email = customer?.email || "";
+    const phoneNumber = customer?.phoneNumber || "";
+    const searchValue = searchQuery?.toLowerCase() || ""; // Assuming searchQuery is your term for searching
+  
+    // Filtering logic
+    return (
+      (name.toLowerCase().includes(searchValue) || 
+       email.toLowerCase().includes(searchValue) || 
+       phoneNumber.includes(searchQuery)) && // Phone number is assumed to be numeric and doesn't need `.toLowerCase()`
+      (statusFilter ? customer.status === statusFilter : true) // Apply statusFilter if it's provided
+    );
+  });
+  
   // Pagination logic
   const indexOfLastCustomer = currentPage * customersPerPage;
   const indexOfFirstCustomer = indexOfLastCustomer - customersPerPage;
@@ -133,6 +144,29 @@ function Customers() {
     XLSX.utils.book_append_sheet(wb, ws, "Customers");
     XLSX.writeFile(wb, "customers_data.xlsx");
   };
+
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const fetchCustomers = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "users"));
+      const customersData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        name: doc.data().name || "Unknown", // Default name if missing
+      }));
+      setCustomers(customersData);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+    }
+  };
+  
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+  
+
+  
 
   return (
     <div className="space-y-6">
@@ -239,55 +273,50 @@ function Customers() {
           </tr>
         </thead>
         <tbody>
-          {currentCustomers.map((customer) => (
-            <tr
-              key={customer.id}
-              className="hover:bg-blue-100 transition duration-300"
-            >
-              <td className="py-2 px-4">
-                <input
-                  type="checkbox"
-                  checked={selectedCustomers.includes(customer.id)}
-                  onChange={() => {
-                    if (selectedCustomers.includes(customer.id)) {
-                      setSelectedCustomers(
-                        selectedCustomers.filter((id) => id !== customer.id)
-                      );
-                    } else {
-                      setSelectedCustomers([...selectedCustomers, customer.id]);
-                    }
-                  }}
-                  className="rounded"
-                />
-              </td>
-              <td className="py-2 px-4">{customer.name}</td>
-              <td className="py-2 px-4">{customer.email}</td>
-              <td className="py-2 px-4">{customer.phoneNumber}</td>
-              <td className="py-2 px-4">{customer.address}</td>
-              <td className="py-2 px-4">{customer.orders}</td>
-              <td className="py-2 px-4 flex space-x-2">
-                <button
-                  onClick={() => handleEdit(customer)}
-                  className="text-blue-500 hover:text-blue-700"
-                >
-                  <FaEdit />
-                </button>
-                <button
-                  onClick={() => handleDelete(customer.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <FaTrashAlt />
-                </button>
-                <button
-                  onClick={() => handleSendEmail(customer.email)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <i className="fas fa-envelope"></i>
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+  {customers.map((customer) => (
+    <tr key={customer.id} className="hover:bg-blue-100 transition duration-300">
+      <td className="py-2 px-4">
+        <input
+          type="checkbox"
+          checked={selectedCustomers.includes(customer.id)}
+          onChange={() => {
+            if (selectedCustomers.includes(customer.id)) {
+              setSelectedCustomers(selectedCustomers.filter((id) => id !== customer.id));
+            } else {
+              setSelectedCustomers([...selectedCustomers, customer.id]);
+            }
+          }}
+          className="rounded"
+        />
+      </td>
+      <td className="py-2 px-4">{`${customer.firstName} ${customer.lastName}`}</td>
+      <td className="py-2 px-4">{customer.email}</td>
+      <td className="py-2 px-4">{customer.phone}</td>
+      <td className="py-2 px-4">{customer.address}</td>
+      <td className="py-2 px-4">{customer.orders || "N/A"}</td>
+      <td className="py-2 px-4 flex space-x-2">
+        <button
+          onClick={() => handleEdit(customer)}
+          className="text-blue-500 hover:text-blue-700"
+        >
+          <FaEdit />
+        </button>
+        <button
+          onClick={() => handleDelete(customer.id)}
+          className="text-red-500 hover:text-red-700"
+        >
+          <FaTrashAlt />
+        </button>
+        <button
+          onClick={() => handleSendEmail(customer.email)}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <i className="fas fa-envelope"></i>
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
       </table>
 
       {/* Pagination Controls */}

@@ -2,40 +2,14 @@ import React, { useState,useEffect  } from "react";
 import { Link } from "react-router-dom";
 import { CSVLink } from "react-csv";
 import { FaEdit, FaTrashAlt, FaPlusCircle, FaFileExcel } from "react-icons/fa"; // Icons for actions
-import { collection, addDoc,getDocs,doc,getDoc,updateDoc,deleteDoc} from "firebase/firestore";
+import { collection, addDoc,getDocs,doc,getDoc,updateDoc,deleteDoc,setDoc} from "firebase/firestore";
 import { db } from "../components/firebase";
 import * as XLSX from "xlsx"; // Library to export Excel file
 import { getAuth } from "firebase/auth"; // Import Firebase Auth
+import Swal from 'sweetalert2';
 
 function Customers() {
   const [customers, setCustomers] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      phoneNumber: "123-456-7890",
-      address: "123 Main St, City, Country",
-      orders: 5,
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane@example.com",
-      phoneNumber: "987-654-3210",
-      address: "456 Elm St, City, Country",
-      orders: 3,
-      status: "Inactive",
-    },
-    {
-      id: 3,
-      name: "Mark Lee",
-      email: "mark@example.com",
-      phoneNumber: "555-666-7777",
-      address: "789 Oak St, City, Country",
-      orders: 4,
-      status: "Active",
-    },
     // Additional customers
   ]);
 
@@ -53,18 +27,18 @@ function Customers() {
     // Fallbacks for missing or undefined properties
     const name = customer?.name || "";
     const email = customer?.email || "";
-    const phoneNumber = customer?.phoneNumber || "";
+    const phone = customer?.phone || "";
     const searchValue = searchQuery?.toLowerCase() || ""; // Assuming searchQuery is your term for searching
   
     // Filtering logic
     return (
       (name.toLowerCase().includes(searchValue) || 
        email.toLowerCase().includes(searchValue) || 
-       phoneNumber.includes(searchQuery)) && // Phone number is assumed to be numeric and doesn't need `.toLowerCase()`
+       phone.includes(searchQuery)) && // Phone number is assumed to be numeric and doesn't need `.toLowerCase()`
       (statusFilter ? customer.status === statusFilter : true) // Apply statusFilter if it's provided
     );
   });
-  
+
   // Pagination logic
   const indexOfLastCustomer = currentPage * customersPerPage;
   const indexOfFirstCustomer = indexOfLastCustomer - customersPerPage;
@@ -86,9 +60,8 @@ function Customers() {
     setIsEditing(false);
     setCurrentCustomer({
       id: null,
-      name: "",
-      email: "",
-      phoneNumber: "",
+      firstName: "",
+      phone: "",
       address: "",
       orders: 0,
       status: "Active",
@@ -147,25 +120,49 @@ function Customers() {
 
   const [searchTerm, setSearchTerm] = useState("");
   
-  const fetchCustomers = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, "users"));
-      const customersData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        name: doc.data().name || "Unknown", // Default name if missing
-      }));
-      setCustomers(customersData);
-    } catch (error) {
-      console.error("Error fetching customers:", error);
-    }
-  };
-  
   useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "users"));
+        const customersData = [];
+        querySnapshot.forEach((doc) => {
+          customersData.push({ id: doc.id, ...doc.data() });
+        });
+        setCustomers(customersData);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
+    };
+  
     fetchCustomers();
   }, []);
   
-
+  const handleSubmitCustomer = async () => {
+    try {
+      // Add customer to Firestore
+      const newCustomer = { ...currentCustomer, id: Date.now().toString() }; // Add an ID for local rendering
+      await setDoc(doc(db, "users", newCustomer.id), newCustomer);
+  
+      // Update local state
+      setCustomers([...customers, newCustomer]);
+  
+      // Close the modal
+      setIsAdding(false);
+  
+      Swal.fire({
+        icon: "success",
+        title: "Customer Added",
+        text: "New customer has been added successfully!",
+      });
+    } catch (error) {
+      console.error("Error adding customer:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to add customer. Please try again.",
+      });
+    }
+  };
   
 
   return (
@@ -223,17 +220,17 @@ function Customers() {
           className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300"
         >
           <FaFileExcel className="inline mr-2" />
-          Export as CSV
+          Export as Excel
         </CSVLink>
 
         {/* Export Data as Excel */}
-        <button
+        {/* <button
           onClick={handleExportExcel}
           className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300"
         >
           <FaFileExcel className="inline mr-2" />
           Export as Excel
-        </button>
+        </button> */}
 
         {/* Add Customer Button */}
         <button
@@ -295,21 +292,21 @@ function Customers() {
       <td className="py-2 px-4">{customer.address}</td>
       <td className="py-2 px-4">{customer.orders || "N/A"}</td>
       <td className="py-2 px-4 flex space-x-2">
-        <button
+        {/* <button
           onClick={() => handleEdit(customer)}
           className="text-blue-500 hover:text-blue-700"
         >
           <FaEdit />
-        </button>
-        <button
+        </button> */}
+        {/* <button
           onClick={() => handleDelete(customer.id)}
           className="text-red-500 hover:text-red-700"
         >
           <FaTrashAlt />
-        </button>
+        </button> */}
         <button
           onClick={() => handleSendEmail(customer.email)}
-          className="text-gray-500 hover:text-gray-700"
+          className="text-gray-500 hover:text-gray-700 py-2 px-2"
         >
           <i className="fas fa-envelope"></i>
         </button>
@@ -333,6 +330,82 @@ function Customers() {
           </button>
         ))}
       </div>
+
+      {isAdding && (
+  <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg">
+      <h2 className="text-lg font-bold mb-4">Add New Customer</h2>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          await handleSubmitCustomer();
+        }}
+      >
+        <div className="mb-4">
+          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+            Name
+          </label>
+          <input
+            type="text"
+            id="firstName"
+            value={currentCustomer.firstName}
+            onChange={(e) => setCurrentCustomer({ ...currentCustomer, firstName: e.target.value })}
+            className="border rounded-md w-full p-2"
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            value={currentCustomer.email}
+            onChange={(e) => setCurrentCustomer({ ...currentCustomer, email: e.target.value })}
+            className="border rounded-md w-full p-2"
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+            Phone Number
+          </label>
+          <input
+            type="text"
+            id="phone"
+            value={currentCustomer.phone}
+            onChange={(e) => setCurrentCustomer({ ...currentCustomer, phone: e.target.value })}
+            className="border rounded-md w-full p-2"
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+            Address
+          </label>
+          <input
+            type="text"
+            id="address"
+            value={currentCustomer.address}
+            onChange={(e) => setCurrentCustomer({ ...currentCustomer, address: e.target.value })}
+            className="border rounded-md w-full p-2"
+          />
+        </div>
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+        >
+          Submit
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsAdding(false)}
+          className="bg-gray-300 text-black px-4 py-2 ml-2 rounded-md hover:bg-gray-400"
+        >
+          Cancel
+        </button>
+      </form>
+    </div>
+  </div>
+)}
     </div>
   );
 }

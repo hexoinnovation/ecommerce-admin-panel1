@@ -119,7 +119,7 @@ function Coupons() {
       <div className="flex justify-between items-center mb-4">
         <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200 flex items-center"
+          className=" bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200 flex items-center"
         >
           <FaPlusCircle className="mr-2" />
           Add New Coupon
@@ -194,7 +194,7 @@ function Coupons() {
 {isModalOpen && (
   <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
     <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-      <h3 className="text-2xl font-semibold mb-4">
+      <h3 className="text-2xl font-semibold mb-4 text-blue-600">
         {selectedCoupon ? "Edit Coupon" : "Add New Coupon"}
       </h3>
       {/* Coupon Code Input */}

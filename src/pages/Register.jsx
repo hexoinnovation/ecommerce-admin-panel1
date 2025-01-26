@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../components/firebase"; // Adjust the import path based on your project structure
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc,setDoc} from "firebase/firestore";
+import { db } from "../components/firebase"; // Firebase config
 
 function Register() {
   const [email, setEmail] = useState("");
@@ -36,8 +38,19 @@ function Register() {
       await createUserWithEmailAndPassword(auth, email, password);
       setError(""); // Clear error message on success
   
+      // Save user details in Firestore (updated to Firestore)
+      const userRef = doc(db, `users/${email.replace(".", "_")}`); // Firestore document reference
+      await setDoc(userRef, {
+        createdAt: new Date().toISOString(),
+        email: email,
+        role: "user", // Set role as "user" by default
+      });
+  
+      // Show success message
+      setError("Registration successful!");
+  
       // Redirect to Login page after successful registration
-      navigate("/login"); 
+      navigate("/login"); // Direct redirection without setTimeout
     } catch (err) {
       // Handle Firebase errors
       if (err.code === "auth/email-already-in-use") {
@@ -47,7 +60,7 @@ function Register() {
       } else if (err.code === "auth/weak-password") {
         setError("Password should be at least 6 characters.");
       } else {
-        setError("Something went wrong! Please try again.");
+        setError("An unexpected error occurred.");
       }
     }
   };
@@ -153,29 +166,6 @@ function Register() {
               Register
             </button>
           </form>
-
-          {/* Social Login Section */}
-          <div className="flex justify-between items-center mt-6">
-            <div className="h-px bg-gray-300 flex-grow"></div>
-            <span className="text-gray-600 px-3">OR</span>
-            <div className="h-px bg-gray-300 flex-grow"></div>
-          </div>
-
-          {/* Social Media Login */}
-          <div className="flex justify-around mt-4">
-            <button
-              className="bg-blue-500 text-white py-2 px-4 rounded-lg shadow-md hover:bg-blue-600 transition duration-300"
-              onClick={() => alert("Google Login clicked")}
-            >
-              Google
-            </button>
-            <button
-              className="bg-gray-800 text-white py-2 px-4 rounded-lg shadow-md hover:bg-gray-700 transition duration-300"
-              onClick={() => alert("Facebook Login clicked")}
-            >
-              Facebook
-            </button>
-          </div>
 
           {/* Login Link */}
           <p className="text-center mt-4 text-sm text-gray-600">

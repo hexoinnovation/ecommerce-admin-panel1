@@ -15,6 +15,7 @@ function Products() {
 
   const currentUser = useAuth(); // Get the current user
   const sanitizedEmail = currentUser?.email?.replace(/\s/g, "_");
+  const [filteredProduct, setFilteredProducts] = useState([]);
 
   useEffect(() => {
     // Fetch products from Firebase and update the local state
@@ -87,11 +88,35 @@ function Products() {
     }
   };
 
+
+
+  
+  // Fetch products from Firestore
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        // Specify the path to your 'Products' collection
+        const productsCollectionRef = collection(db, "Products");
+        const productSnapshot = await getDocs(productsCollectionRef);
+        const productList = productSnapshot.docs.map((doc) => ({
+          id: doc.id, // Firestore-generated ID
+          ...doc.data()  // Data from the document
+        }));
+        setProducts(productList);
+        setFilteredProducts(productList); // You can add filtering logic here if needed
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Product Form Title and Show Product List Button in same row */}
       <div className="flex justify-between items-center bg-white p-2 rounded-lg shadow-md mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">
+        <h2 className="text-xl font-semibold text-gray-800 text-blue-600">
           {editingProduct ? "Edit Product" : "Add New Product"}
         </h2>
         <button
@@ -154,7 +179,10 @@ function Products() {
                       Product Name
                     </th>
                     <th className="py-2 px-3 text-sm font-semibold">Price</th>
+                    <th className="py-2 px-3 text-sm font-semibold">Discount Price
+                    </th>
                     <th className="py-2 px-3 text-sm font-semibold">Stock</th>
+                    <th className="py-2 px-3 text-sm font-semibold">Product Availability</th>
                     <th className="py-2 px-3 text-sm font-semibold">Actions</th>
                   </tr>
                 </thead>
@@ -163,8 +191,10 @@ function Products() {
                     filteredProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-gray-50">
                         <td className="py-2 px-3">{product.name}</td>
-                        <td className="py-2 px-3">${product.price}</td>
+                        <td className="py-2 px-3">₹{product.price}</td>
+                        <td className="py-2 px-3">₹{product.discountPrice}</td>
                         <td className="py-2 px-3">{product.stock}</td>
+                        <td className="py-2 px-3">{product.availability}</td>
                         <td className="py-2 px-3 flex items-center space-x-2">
                           <button
                             onClick={() => setEditingProduct(product)}

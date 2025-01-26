@@ -235,7 +235,7 @@ function Orders() {
               </h3>
             </div>
             <p className="text-gray-600">Order ID: {order.id}</p>
-            <p className="text-gray-600">Total: ${order.total}</p>
+            <p className="text-gray-600">Total: ₹{order.total}</p>
             <p className="text-sm mt-2">
               Status:{" "}
               <span
@@ -340,9 +340,9 @@ function Orders() {
                     <tr key={index}>
                       <td className="py-2 px-4 border">{item.name}</td>
                       <td className="py-2 px-4 border">{item.quantity}</td>
-                      <td className="py-2 px-4 border">${item.price}</td>
+                      <td className="py-2 px-4 border">₹{item.price}</td>
                       <td className="py-2 px-4 border">
-                        ${item.price * item.quantity}
+                      ₹{item.price * item.quantity}
                       </td>
                     </tr>
                   ))}

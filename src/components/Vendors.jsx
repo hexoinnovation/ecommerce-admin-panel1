@@ -1,27 +1,14 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { CSVLink } from "react-csv"; // For exporting CSV
 import { FaPlusCircle, FaEdit, FaTrashAlt, FaFileExport } from "react-icons/fa"; // Icons for actions
+import { collection, addDoc,getDocs,doc,getDoc,updateDoc,deleteDoc} from "firebase/firestore";
+import { db } from "../components/firebase";
+import { getAuth } from "firebase/auth"; // Import Firebase Auth
 
 function Vendors() {
-  const [vendors, setVendors] = useState([
-    {
-      id: 1,
-      name: "Vendor A",
-      email: "vendorA@example.com",
-      phone: "123-456-7890",
-      address: "123 Vendor St, City, Country",
-    },
-    {
-      id: 2,
-      name: "Vendor B",
-      email: "vendorB@example.com",
-      phone: "987-654-3210",
-      address: "456 Vendor Rd, City, Country",
-    },
-    // More vendors...
-  ]);
 
-  const [selectedVendors, setSelectedVendors] = useState([]); // Track selected vendors for bulk actions
+  const [vendors, setVendors] = useState([]);
+  const [selectedVendors, setSelectedVendors] = useState([]);
   const [vendorData, setVendorData] = useState({
     name: "",
     email: "",
@@ -29,40 +16,128 @@ function Vendors() {
     address: "",
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editVendorId, setEditVendorId] = useState(null); // Manage the vendor currently being edited
+  const [editVendorId, setEditVendorId] = useState(null);
+
+  // Fetch vendor data from Firestore
+  useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        // Get the current user's email
+        const auth = getAuth();
+        const userEmail = auth.currentUser ? auth.currentUser.email : null;
+
+        if (!userEmail) {
+          console.error("No user is logged in");
+          return;
+        }
+
+        // Get vendors from Firestore
+        const vendorCollectionRef = collection(db, `admin/${userEmail}/vendors`);
+        const vendorSnapshot = await getDocs(vendorCollectionRef);
+        const vendorList = vendorSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        // Set the vendors in state
+        setVendors(vendorList);
+      } catch (error) {
+        console.error("Error fetching vendors: ", error);
+      }
+    };
+
+    fetchVendors();
+  }, []);
+
+  // Handle vendor selection (checkbox)
+  const handleVendorSelection = (id) => {
+    setSelectedVendors((prevSelected) =>
+      prevSelected.includes(id)
+        ? prevSelected.filter((vendorId) => vendorId !== id)
+        : [...prevSelected, id]
+    );
+  };
+
+  // Handle adding new vendor
+  const handleAddVendor = async () => {
+    try {
+      const auth = getAuth();
+      const userEmail = auth.currentUser ? auth.currentUser.email : null;
+      if (!userEmail) {
+        console.error("No user is logged in");
+        return;
+      }
+
+      // Create new vendor object
+      const newVendor = {
+        name: vendorData.name,
+        email: vendorData.email,
+        phone: vendorData.phone,
+        address: vendorData.address,
+      };
+
+      // Store new vendor in Firestore
+      const vendorCollectionRef = collection(db, `admin/${userEmail}/vendors`);
+      await addDoc(vendorCollectionRef, newVendor);
+
+      // Update local state
+      setVendors([...vendors, newVendor]);
+      setVendorData({ name: "", email: "", phone: "", address: "" });
+      setIsModalOpen(false);
+
+      console.log("Vendor added successfully!");
+    } catch (error) {
+      console.error("Error adding vendor: ", error);
+    }
+  };
+
+ 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Handle adding new vendor
-  const handleAddVendor = () => {
-    const newVendor = {
-      id: vendors.length + 1,
-      name: vendorData.name,
-      email: vendorData.email,
-      phone: vendorData.phone,
-      address: vendorData.address,
-    };
-    setVendors([...vendors, newVendor]);
-    setVendorData({ name: "", email: "", phone: "", address: "" });
-    setIsModalOpen(false);
-  };
+ 
+  // Handle editing a vendor
+  const handleEditVendor = async () => {
+    try {
+      const vendorToUpdate = vendors.find((vendor) => vendor.id === editVendorId);
+      const updatedVendor = { ...vendorToUpdate, ...vendorData };
 
-  // Handle editing vendor
-  const handleEditVendor = () => {
-    setVendors(
-      vendors.map((vendor) =>
-        vendor.id === editVendorId ? { ...vendor, ...vendorData } : vendor
-      )
-    );
-    setVendorData({ name: "", email: "", phone: "", address: "" });
-    setEditVendorId(null);
-    setIsModalOpen(false);
+      // Update Firestore document
+      const vendorDocRef = doc(db, `admin/${getAuth().currentUser.email}/vendors`, editVendorId);
+      await updateDoc(vendorDocRef, updatedVendor);
+
+      // Update local state
+      setVendors(
+        vendors.map((vendor) =>
+          vendor.id === editVendorId ? { ...vendor, ...vendorData } : vendor
+        )
+      );
+
+      setVendorData({ name: "", email: "", phone: "", address: "" });
+      setEditVendorId(null);
+      setIsModalOpen(false);
+
+      console.log("Vendor updated successfully!");
+    } catch (error) {
+      console.error("Error editing vendor: ", error);
+    }
   };
 
   // Handle deleting a vendor
-  const handleDeleteVendor = (vendorId) => {
-    setVendors(vendors.filter((vendor) => vendor.id !== vendorId));
+  const handleDeleteVendor = async (vendorId) => {
+    try {
+      // Delete from Firestore
+      const vendorDocRef = doc(db, `admin/${getAuth().currentUser.email}/vendors`, vendorId);
+      await deleteDoc(vendorDocRef);
+
+      // Remove from local state
+      setVendors(vendors.filter((vendor) => vendor.id !== vendorId));
+
+      console.log("Vendor deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting vendor: ", error);
+    }
   };
 
   // Handle bulk delete of selected vendors
@@ -86,14 +161,6 @@ function Vendors() {
       vendor.phone.includes(searchQuery)
   );
 
-  // Handle vendor selection for bulk actions
-  const handleVendorSelection = (vendorId) => {
-    setSelectedVendors((prev) =>
-      prev.includes(vendorId)
-        ? prev.filter((id) => id !== vendorId)
-        : [...prev, vendorId]
-    );
-  };
 
   // Handle input change for vendor form
   const handleInputChange = (e) => {
@@ -223,42 +290,18 @@ function Vendors() {
         </tbody>
       </table>
 
-      {/* Pagination Controls */}
-      <div className="flex justify-between mt-4">
-        <button
-          onClick={handlePrevPage}
-          disabled={currentPage === 1}
-          className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200"
-        >
-          Previous
-        </button>
-        <span className="self-center text-lg text-gray-700">
-          Page {currentPage} of{" "}
-          {Math.ceil(filteredVendors.length / itemsPerPage)}
-        </span>
-        <button
-          onClick={handleNextPage}
-          disabled={
-            currentPage === Math.ceil(filteredVendors.length / itemsPerPage)
-          }
-          className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200"
-        >
-          Next
-        </button>
-      </div>
-
       {/* Modal for Adding and Editing Vendor */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h3 className="text-2xl font-semibold mb-4">
+            <h3 className="text-2xl font-semibold mb-4 text-blue-600">
               {editVendorId ? "Edit Vendor" : "Add New Vendor"}
             </h3>
             <input
               type="text"
               name="name"
               value={vendorData.name}
-              onChange={handleInputChange}
+              onChange={(e) => setVendorData({ ...vendorData, name: e.target.value })}
               className="w-full p-3 border border-gray-300 rounded-lg mb-4"
               placeholder="Enter vendor name"
             />
@@ -266,7 +309,7 @@ function Vendors() {
               type="email"
               name="email"
               value={vendorData.email}
-              onChange={handleInputChange}
+              onChange={(e) => setVendorData({ ...vendorData, email: e.target.value })}
               className="w-full p-3 border border-gray-300 rounded-lg mb-4"
               placeholder="Enter vendor email"
             />
@@ -274,7 +317,7 @@ function Vendors() {
               type="text"
               name="phone"
               value={vendorData.phone}
-              onChange={handleInputChange}
+              onChange={(e) => setVendorData({ ...vendorData, phone: e.target.value })}
               className="w-full p-3 border border-gray-300 rounded-lg mb-4"
               placeholder="Enter vendor phone"
             />
@@ -282,7 +325,7 @@ function Vendors() {
               type="text"
               name="address"
               value={vendorData.address}
-              onChange={handleInputChange}
+              onChange={(e) => setVendorData({ ...vendorData, address: e.target.value })}
               className="w-full p-3 border border-gray-300 rounded-lg mb-4"
               placeholder="Enter vendor address"
             />

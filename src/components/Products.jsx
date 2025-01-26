@@ -46,7 +46,10 @@ function Products() {
 
   const handleAddProduct = async (productData) => {
     try {
-      const collectionRef = collection(db, "Products");
+      const collectionRef = collection(
+          db, "admin","nithya123@gmail.com",
+          "products"
+        );
       const docRef = await addDoc(collectionRef, productData);
       setProducts([...products, { ...productData, id: docRef.id }]);
       alert("Product added successfully!");

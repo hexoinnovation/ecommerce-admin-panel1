@@ -21,12 +21,13 @@ function ProductForm({ onSubmit, existingProduct }) {
   const [taxClass, setTaxClass] = useState(""); // Tax Class
   const [productUrl, setProductUrl] = useState(""); // Product URL
   const [availability, setAvailability] = useState("In Stock"); // Product availability
-
-  const handleSubmit = (e) => {
+  const [previewImage, setPreviewImage] = useState(null);
+   const [productData, setproductData] = useState("");
+   const handleSubmit = (e) => {
     e.preventDefault();
-
+  
     const tagsArray = tags.split(",").map((tag) => tag.trim());
-
+  
     const productData = {
       name,
       price,
@@ -38,7 +39,7 @@ function ProductForm({ onSubmit, existingProduct }) {
       rating,
       tags: tagsArray,
       visible,
-      image,
+      image, // Use image here (from state, saved as base64 string)
       brand,
       dimensions,
       additionalNotes,
@@ -48,9 +49,9 @@ function ProductForm({ onSubmit, existingProduct }) {
       productUrl,
       availability,
     };
-
+  
     onSubmit(productData);
-
+  
     // Clear form after submission
     setName("");
     setPrice("");
@@ -62,7 +63,7 @@ function ProductForm({ onSubmit, existingProduct }) {
     setRating("");
     setTags("");
     setVisible(true);
-    setImage(null);
+    setImage(null); // Clear the image preview
     setBrand(""); // Clear brand
     setDimensions(""); // Clear dimensions
     setAdditionalNotes(""); // Clear additional notes
@@ -72,7 +73,21 @@ function ProductForm({ onSubmit, existingProduct }) {
     setProductUrl(""); // Clear product URL
     setAvailability("In Stock"); // Clear availability
   };
-
+  
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        // Save the base64 string to the image state for submitting
+        setImage(event.target.result);  // This will save the base64-encoded string
+      };
+      reader.readAsDataURL(file); // This creates a base64-encoded string for the image
+    }
+  };
+  
+  
+  
   return (
     <form
       onSubmit={handleSubmit}
@@ -211,26 +226,26 @@ function ProductForm({ onSubmit, existingProduct }) {
           </select>
         </div>
 
-        {/* Product Image */}
         <div className="col-span-2">
-          <label className="block text-gray-700 text-sm font-semibold">
-            Product Image
-          </label>
-          <input
-            type="file"
-            onChange={(e) => setImage(URL.createObjectURL(e.target.files[0]))}
-            className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-          />
-          {image && (
-            <div className="mt-4">
-              <img
-                src={image}
-                alt="Product Preview"
-                className="max-w-full h-auto rounded-md"
-              />
-            </div>
-          )}
-        </div>
+  <label className="block text-gray-700 text-sm font-semibold">
+    Product Image
+  </label>
+  <input
+    type="file"
+    onChange={handleImageUpload}
+    className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+  />
+  {image && (
+    <div className="mt-4">
+      <img
+        src={image}
+        alt="Product Preview"
+        className="max-w-full h-auto rounded-md"
+      />
+    </div>
+  )}
+</div>
+
       </div>
 
       <button

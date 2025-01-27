@@ -3,6 +3,7 @@ import ProductForm from "../pages/ProductForm"; // Assuming you have a form for 
 import { collection, addDoc, setDoc, doc, deleteDoc,getDocs } from "firebase/firestore";
 import { db } from "./firebase";
 import { useAuth } from "../components/auth";
+import { getAuth } from "firebase/auth";
 
 function Products() {
   const [products, setProducts] = useState([]);
@@ -47,10 +48,26 @@ function Products() {
 
   const handleAddProduct = async (productData) => {
     try {
+      // Get the current user's email
+      const auth = getAuth(); // Initialize Firebase Auth
+      const currentUser = auth.currentUser; // Get the currently signed-in user
+  
+      if (!currentUser || !currentUser.email) {
+        alert("No user is signed in. Please sign in to add a product.");
+        return;
+      }
+  
+      const userEmail = currentUser.email; // Extract the email of the signed-in user
+  
+      // Firestore collection path with dynamic email
       const collectionRef = collection(
-          db, "admin","nithya123@gmail.com",
-          "products"
-        );
+        db,
+        "admin",
+        userEmail, // Use the current user's email
+        "products"
+      );
+  
+      // Add the product to Firestore
       const docRef = await addDoc(collectionRef, productData);
       setProducts([...products, { ...productData, id: docRef.id }]);
       alert("Product added successfully!");
@@ -62,7 +79,21 @@ function Products() {
 
   const handleEditProduct = async (productData) => {
     try {
-      const docRef = doc(db, "Products", productData.id);
+      // Get the current user's email
+      const auth = getAuth(); // Initialize Firebase Auth
+      const currentUser = auth.currentUser; // Get the currently signed-in user
+  
+      if (!currentUser || !currentUser.email) {
+        alert("No user is signed in. Please sign in to edit a product.");
+        return;
+      }
+  
+      const userEmail = currentUser.email; // Extract the email of the signed-in user
+  
+      // Firestore document path with dynamic email
+      const docRef = doc(db, "admin", userEmail, "products", productData.id);
+  
+      // Update the product in Firestore
       await setDoc(docRef, productData);
       const updatedProducts = products.map((product) =>
         product.id === productData.id ? productData : product
@@ -76,41 +107,72 @@ function Products() {
     }
   };
 
+
   const handleDeleteProduct = async (productId) => {
+  try {
+    // Get the current user's email
+    const auth = getAuth(); // Initialize Firebase Auth
+    const currentUser = auth.currentUser; // Get the currently signed-in user
+
+    if (!currentUser || !currentUser.email) {
+      alert("No user is signed in. Please sign in to delete a product.");
+      return;
+    }
+
+    const userEmail = currentUser.email; // Extract the email of the signed-in user
+
+    // Firestore document path with dynamic email
+    const docRef = doc(db, "admin", userEmail, "products", productId);
+
+    // Delete the product from Firestore
+    await deleteDoc(docRef);
+    setProducts(products.filter((product) => product.id !== productId));
+    alert("Product deleted successfully!");
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    alert("Failed to delete product. Please try again.");
+  }
+};
+
+  // Fetch products from Firestore
+useEffect(() => {
+  const fetchProducts = async () => {
     try {
-      const docRef = doc(db,  "Products", productId);
-      await deleteDoc(docRef);
-      setProducts(products.filter((product) => product.id !== productId));
-      alert("Product deleted successfully!");
+      // Get the current user's email
+      const auth = getAuth(); // Initialize Firebase Auth
+      const currentUser = auth.currentUser; // Get the currently signed-in user
+
+      if (!currentUser || !currentUser.email) {
+        console.error("No user is signed in. Please sign in to view products.");
+        return;
+      }
+
+      const userEmail = currentUser.email; // Extract the user's email
+
+      // Specify the path to your 'Products' collection
+      const productsCollectionRef = collection(
+        db,
+        "admin",
+        userEmail, // Use the current user's email
+        "products"
+      );
+
+      // Fetch products from Firestore
+      const productSnapshot = await getDocs(productsCollectionRef);
+      const productList = productSnapshot.docs.map((doc) => ({
+        id: doc.id, // Firestore-generated ID
+        ...doc.data() // Data from the document
+      }));
+
+      setProducts(productList);
+      setFilteredProducts(productList); // Set filtered products if needed
     } catch (error) {
-      console.error("Error deleting product:", error);
-      alert("Failed to delete product. Please try again.");
+      console.error("Error fetching products:", error);
     }
   };
 
-
-
-  
-  // Fetch products from Firestore
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        // Specify the path to your 'Products' collection
-        const productsCollectionRef = collection(db, "Products");
-        const productSnapshot = await getDocs(productsCollectionRef);
-        const productList = productSnapshot.docs.map((doc) => ({
-          id: doc.id, // Firestore-generated ID
-          ...doc.data()  // Data from the document
-        }));
-        setProducts(productList);
-        setFilteredProducts(productList); // You can add filtering logic here if needed
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      }
-    };
-
-    fetchProducts();
-  }, []);
+  fetchProducts();
+}, []); // Dependency array, no additional dependencies required here
 
   return (
     <div className="space-y-6">

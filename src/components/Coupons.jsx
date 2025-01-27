@@ -2,6 +2,7 @@ import React, { useState,useEffect } from "react";
 import { FaTrashAlt, FaEdit, FaPlusCircle } from "react-icons/fa"; // Icons for actions
 import { collection, addDoc,getDocs,doc,getDoc,deleteDoc,updateDoc} from "firebase/firestore";
 import { db } from "./firebase";
+import { getAuth } from "firebase/auth";
 
 function Coupons() {
   const [coupons, setCoupons] = useState([
@@ -14,35 +15,68 @@ function Coupons() {
   const [currentPage, setCurrentPage] = useState(1);
   const couponsPerPage = 5;
 
-
-
-
   // Function to fetch coupons from Firestore
-  const fetchCoupons = async () => {
-    try {
-      const collectionRef = collection(db, "Coupons & Discounts");
-      const querySnapshot = await getDocs(collectionRef);
-      const couponsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setCoupons(couponsData);
-    } catch (error) {
-      console.error("Error fetching coupons: ", error);
-    }
-  };
+const fetchCoupons = async () => {
+  try {
+    // Get the currently signed-in user's email
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
 
-  // UseEffect to fetch data when the component is mounted
-  useEffect(() => {
-    fetchCoupons();
-  }, []); // Empty dependency array means this runs once on mount
+    if (!currentUser || !currentUser.email) {
+      console.error("No user is signed in. Unable to fetch coupons.");
+      return;
+    }
+
+    const userEmail = currentUser.email;
+
+    // Firestore path: "admin/{userEmail}/Coupons & Discounts"
+    const collectionRef = collection(db, "admin", userEmail, "Coupons & Discounts");
+
+    // Fetch data from Firestore
+    const querySnapshot = await getDocs(collectionRef);
+
+    // Map Firestore documents to an array of coupon objects
+    const couponsData = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    // Update state with fetched coupons
+    setCoupons(couponsData);
+  } catch (error) {
+    console.error("Error fetching coupons: ", error);
+  }
+};
+
+// UseEffect to fetch data when the component is mounted
+useEffect(() => {
+  fetchCoupons();
+}, []); // Empty dependency array ensures this runs only once on mount
 
   const handleAddCoupon = async () => {
     try {
-      const collectionRef = collection(db, "Coupons & Discounts");
+      // Get the currently signed-in user's email
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+  
+      if (!currentUser || !currentUser.email) {
+        alert("No user is signed in. Please sign in to add a coupon.");
+        return;
+      }
+  
+      const userEmail = currentUser.email;
+  
+      // Firestore path: "admin/{userEmail}/Coupons & Discounts"
+      const collectionRef = collection(db, "admin", userEmail, "Coupons & Discounts");
+  
+      // Add the coupon to Firestore
       const docRef = await addDoc(collectionRef, newCoupon);
+  
+      // Update the local state
       setCoupons([...coupons, { ...newCoupon, id: docRef.id }]);
-      setNewCoupon({ code: "", discount: "" }); // Clear the newCoupon form
+  
+      // Clear form and close modal
+      setNewCoupon({ code: "", discount: "" });
       alert("Coupon added successfully!");
       setIsModalOpen(false);
     } catch (error) {
@@ -51,13 +85,34 @@ function Coupons() {
     }
   };
   
-  // Edit Coupon
   const handleEditCoupon = async () => {
     try {
-      const docRef = doc(db, "Coupons & Discounts", selectedCoupon.id);
+      // Get the currently signed-in user's email
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+  
+      if (!currentUser || !currentUser.email) {
+        alert("No user is signed in. Please sign in to edit a coupon.");
+        return;
+      }
+  
+      const userEmail = currentUser.email;
+  
+      // Firestore path: "admin/{userEmail}/Coupons & Discounts/{couponId}"
+      const docRef = doc(db, "admin", userEmail, "Coupons & Discounts", selectedCoupon.id);
+  
+      // Update the coupon in Firestore
       await updateDoc(docRef, selectedCoupon);
-      setCoupons(coupons.map(coupon => coupon.id === selectedCoupon.id ? selectedCoupon : coupon));
-      setSelectedCoupon(null); // Clear the selected coupon after editing
+  
+      // Update the local state
+      setCoupons(
+        coupons.map((coupon) =>
+          coupon.id === selectedCoupon.id ? selectedCoupon : coupon
+        )
+      );
+  
+      // Clear selection and close modal
+      setSelectedCoupon(null);
       alert("Coupon updated successfully!");
       setIsModalOpen(false);
     } catch (error) {
@@ -68,17 +123,33 @@ function Coupons() {
 
   // Delete a coupon
   const handleDeleteCoupon = async (couponId) => {
-    try {
-      const docRef = doc(db, "Coupons & Discounts", couponId);
-      await deleteDoc(docRef);
-      setCoupons(coupons.filter(coupon => coupon.id !== couponId)); // Remove from state
-      alert("Coupon deleted successfully!");
-    } catch (error) {
-      console.error("Error deleting coupon:", error);
-      alert("Failed to delete coupon. Please try again.");
-    }
-  };
+  try {
+    // Get the currently signed-in user's email
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
 
+    if (!currentUser || !currentUser.email) {
+      alert("No user is signed in. Please sign in to delete a coupon.");
+      return;
+    }
+
+    const userEmail = currentUser.email;
+
+    // Firestore path: "admin/{userEmail}/Coupons & Discounts/{couponId}"
+    const docRef = doc(db, "admin", userEmail, "Coupons & Discounts", couponId);
+
+    // Delete the coupon from Firestore
+    await deleteDoc(docRef);
+
+    // Update the local state
+    setCoupons(coupons.filter((coupon) => coupon.id !== couponId));
+
+    alert("Coupon deleted successfully!");
+  } catch (error) {
+    console.error("Error deleting coupon:", error);
+    alert("Failed to delete coupon. Please try again.");
+  }
+};
 
   // Filtered coupons based on the search query
   const filteredCoupons = coupons.filter((coupon) =>

@@ -61,6 +61,7 @@ function Customers() {
     setCurrentCustomer({
       id: null,
       firstName: "",
+      lastName:"",
       phone: "",
       address: "",
       orders: 0,
@@ -123,7 +124,7 @@ function Customers() {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "users"));
+        const querySnapshot = await getDocs(collection(db, "admin", "nithya123@gmail.com", "users"));
         const customersData = [];
         querySnapshot.forEach((doc) => {
           customersData.push({ id: doc.id, ...doc.data() });
@@ -139,9 +140,10 @@ function Customers() {
   
   const handleSubmitCustomer = async () => {
     try {
-      // Add customer to Firestore
+      // Add customer to Firestore with the updated path
       const newCustomer = { ...currentCustomer, id: Date.now().toString() }; // Add an ID for local rendering
-      await setDoc(doc(db, "users", newCustomer.id), newCustomer);
+      const docRef = doc(db, "admin", "nithya123@gmail.com", "users", newCustomer.id); // Modify path here
+      await setDoc(docRef, newCustomer); // Save customer at the new path
   
       // Update local state
       setCustomers([...customers, newCustomer]);
@@ -343,13 +345,25 @@ function Customers() {
       >
         <div className="mb-4">
           <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-            Name
+          FirstName
           </label>
           <input
             type="text"
             id="firstName"
             value={currentCustomer.firstName}
             onChange={(e) => setCurrentCustomer({ ...currentCustomer, firstName: e.target.value })}
+            className="border rounded-md w-full p-2"
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+          LastName
+          </label>
+          <input
+            type="text"
+            id="lastName"
+            value={currentCustomer.lastName}
+            onChange={(e) => setCurrentCustomer({ ...currentCustomer, lastName: e.target.value })}
             className="border rounded-md w-full p-2"
           />
         </div>

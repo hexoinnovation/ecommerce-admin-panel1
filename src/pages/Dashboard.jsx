@@ -3,6 +3,8 @@ import { collection, addDoc,getDocs,doc,getDoc,setDoc} from "firebase/firestore"
 import { db } from "../components/firebase";
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import { getAuth } from "firebase/auth";
+
 
 function Dashboard() {
   const [currentDateTime, setCurrentDateTime] = useState(""); // State to store current date and time
@@ -28,17 +30,31 @@ function Dashboard() {
   // Fetch products on component mount
   useEffect(() => {
     const fetchProducts = async () => {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+  
+      if (!currentUser) {
+        alert("No user is currently logged in.");
+        return;
+      }
+  
+      const sanitizedEmail = currentUser.email.replace(/\s/g, "_"); // Sanitize email for Firestore path
+  
       try {
-        const collectionRef = collection(db, "Products");
+        // Updated collection path with "admin" and the sanitized user email
+        const collectionRef = collection(db, "admin", sanitizedEmail, "products");
+  
+        // Fetch products from the specified path
         const productSnapshot = await getDocs(collectionRef);
         const productList = productSnapshot.docs.map((doc) => doc.data());
-        setProducts(productList);
+  
+        setProducts(productList); // Set products data
         setProductCount(productList.length); // Set the product count
       } catch (error) {
         console.error("Error fetching products:", error);
       }
     };
-
+  
     fetchProducts();
   }, []);
 

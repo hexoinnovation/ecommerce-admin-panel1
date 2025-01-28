@@ -3,6 +3,8 @@ import { collection, addDoc,getDocs,doc,getDoc,setDoc} from "firebase/firestore"
 import { db } from "../components/firebase";
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+import { getAuth } from "firebase/auth";
+
 
 function Dashboard() {
   const [currentDateTime, setCurrentDateTime] = useState(""); // State to store current date and time
@@ -28,17 +30,31 @@ function Dashboard() {
   // Fetch products on component mount
   useEffect(() => {
     const fetchProducts = async () => {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+  
+      if (!currentUser) {
+        alert("No user is currently logged in.");
+        return;
+      }
+  
+      const sanitizedEmail = currentUser.email.replace(/\s/g, "_"); // Sanitize email for Firestore path
+  
       try {
-        const collectionRef = collection(db, "Products");
+        // Updated collection path with "admin" and the sanitized user email
+        const collectionRef = collection(db, "admin", sanitizedEmail, "products");
+  
+        // Fetch products from the specified path
         const productSnapshot = await getDocs(collectionRef);
         const productList = productSnapshot.docs.map((doc) => doc.data());
-        setProducts(productList);
+  
+        setProducts(productList); // Set products data
         setProductCount(productList.length); // Set the product count
       } catch (error) {
         console.error("Error fetching products:", error);
       }
     };
-
+  
     fetchProducts();
   }, []);
 
@@ -56,58 +72,87 @@ function Dashboard() {
     status: "Active",
   });
 
-  // Fetching customers and setting total count
   useEffect(() => {
     const fetchCustomers = async () => {
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+  
+      if (!currentUser) {
+        console.error("No user is currently logged in.");
+        return;
+      }
+  
+      // Sanitize the email to use it in the Firestore path
+      const sanitizedEmail = currentUser.email.replace(/\s/g, "_");
+  
       try {
-        const querySnapshot = await getDocs(collection(db, "users"));
+        // Sanitize the email to use it in the Firestore path
+        const sanitizedEmail = currentUser.email.replace(/\s/g, "_");
+      
+        // Fetch from the 'admin/{sanitizedEmail}/users' collection
+        const adminUsersRef = collection(db, "admin", sanitizedEmail, "users");
+        const querySnapshotAdminUsers = await getDocs(adminUsersRef);
         const customersData = [];
-        querySnapshot.forEach((doc) => {
+      
+        // Loop through each document in the collection
+        querySnapshotAdminUsers.forEach((doc) => {
           customersData.push({ id: doc.id, ...doc.data() });
         });
+      
+        // Optionally, handle the state update here (example: setting customers)
         setCustomers(customersData);
-        setTotalCustomers(customersData.length); // Set total count here
+        setTotalCustomers(customersData.length); // Update total customer count
+      
       } catch (error) {
         console.error("Error fetching customers:", error);
+        // Handle the error as appropriate (e.g., show an alert)
       }
     };
-
+  
     fetchCustomers();
   }, []); // Empty dependency array ensures this runs only once when component mounts
+  
 
-  // Handle customer addition
-  const handleSubmitCustomer = async () => {
-    try {
-      const newCustomer = { ...currentCustomer, id: Date.now().toString() };
-      await setDoc(doc(db, "users", newCustomer.id), newCustomer);
-
-      // Update local state and total count
-      setCustomers([...customers, newCustomer]);
-      setTotalCustomers(customers.length + 1); // Increment the total count by 1
-
-      setIsAdding(false);
-
-      Swal.fire({
-        icon: "success",
-        title: "Customer Added",
-        text: "New customer has been added successfully!",
-      });
-    } catch (error) {
-      console.error("Error adding customer:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to add customer. Please try again.",
-      });
-    }
-  };
-
+  // const handleSubmitCustomer = async () => {
+  //   try {
+  //     const newCustomer = { ...currentCustomer, id: Date.now().toString() };
+  
+  //     // Sanitize the user's email to be used in Firestore path
+  //     const userEmail = "nithya123@gmail.com"; // Replace with the actual logged-in user's email if needed
+  //     const sanitizedEmail = userEmail.replace(/\s/g, "_");
+  
+  //     // Modify the docRef to store customer data under the path: admin/{userEmail}/users/{newCustomer.id}
+  //     const docRef = doc(db, "admin", sanitizedEmail, "users", newCustomer.id);
+  
+  //     // Save new customer data in Firestore
+  //     await setDoc(docRef, newCustomer);
+  
+  //     // Update local state and total count
+  //     setCustomers([...customers, newCustomer]);
+  //     setTotalCustomers(customers.length + 1); // Increment the total count by 1
+  
+  //     setIsAdding(false);
+  
+  //     Swal.fire({
+  //       icon: "success",
+  //       title: "Customer Added",
+  //       text: "New customer has been added successfully!",
+  //     });
+  //   } catch (error) {
+  //     console.error("Error adding customer:", error);
+  //     Swal.fire({
+  //       icon: "error",
+  //       title: "Error",
+  //       text: "Failed to add customer. Please try again.",
+  //     });
+  //   }
+  // };
+  
   const navigate = useNavigate();
-
+  
   const handleRedirect = () => {
     navigate('/reports'); // Redirect to /reports page
   };
-  
 
   return (
     <div className="space-y-6">
@@ -145,9 +190,9 @@ function Dashboard() {
           <p className="text-3xl font-bold text-white">₹12,500</p>
         </div>
         <div className="bg-gradient-to-r from-teal-400 to-teal-600 p-6 rounded-lg shadow-lg">
-        <h3 className="text-xl font-semibold text-white">Active Users</h3>
-        <p className="text-3xl font-bold text-white">{totalCustomers}</p>
-        </div>
+  <h3 className="text-xl font-semibold text-white">Active Users</h3>
+  <p className="text-3xl font-bold text-white">{totalCustomers}</p>
+</div>
         <div className="bg-gradient-to-r from-red-400 to-red-600 p-6 rounded-lg shadow-lg">
           <h3 className="text-xl font-semibold text-white">Pending Orders</h3>
           <p className="text-3xl font-bold text-white">50</p>

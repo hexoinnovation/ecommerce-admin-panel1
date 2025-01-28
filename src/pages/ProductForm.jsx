@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { collection, addDoc,getDocs,doc,getDoc,setDoc} from "firebase/firestore";
+import { db,auth } from "../components/firebase";
 
 // Assuming the ProductForm component handles the form for adding/editing products
 function ProductForm({ onSubmit, existingProduct }) {
@@ -21,13 +23,13 @@ function ProductForm({ onSubmit, existingProduct }) {
   const [taxClass, setTaxClass] = useState(""); // Tax Class
   const [productUrl, setProductUrl] = useState(""); // Product URL
   const [availability, setAvailability] = useState("In Stock"); // Product availability
-  const [previewImage, setPreviewImage] = useState(null);
-   const [productData, setproductData] = useState("");
-   const handleSubmit = (e) => {
+
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-  
+
     const tagsArray = tags.split(",").map((tag) => tag.trim());
-  
+
     const productData = {
       name,
       price,
@@ -39,7 +41,7 @@ function ProductForm({ onSubmit, existingProduct }) {
       rating,
       tags: tagsArray,
       visible,
-      image, // Use image here (from state, saved as base64 string)
+      image,
       brand,
       dimensions,
       additionalNotes,
@@ -48,10 +50,12 @@ function ProductForm({ onSubmit, existingProduct }) {
       taxClass,
       productUrl,
       availability,
+      isBestOffer, // ✅ Added Best Offer Product in data
+      
     };
-  
+
     onSubmit(productData);
-  
+
     // Clear form after submission
     setName("");
     setPrice("");
@@ -63,7 +67,7 @@ function ProductForm({ onSubmit, existingProduct }) {
     setRating("");
     setTags("");
     setVisible(true);
-    setImage(null); // Clear the image preview
+    setImage(null);
     setBrand(""); // Clear brand
     setDimensions(""); // Clear dimensions
     setAdditionalNotes(""); // Clear additional notes
@@ -72,8 +76,36 @@ function ProductForm({ onSubmit, existingProduct }) {
     setTaxClass(""); // Clear tax class
     setProductUrl(""); // Clear product URL
     setAvailability("In Stock"); // Clear availability
+    setIsBestOffer(false); // ✅ Reset Best Offer Product selection
   };
-  
+
+
+
+  const [isBestOffer, setIsBestOffer] = useState(false); // State for radio button
+   const [categories, setCategories] = useState([]); // Store fetched categories
+ 
+   // Get current user email
+   const userEmail = auth.currentUser?.email; 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      if (!userEmail) return; // Ensure user is logged in
+
+      try {
+        const categoriesCollectionRef = collection(db, "admin", userEmail, "Categories");
+        const querySnapshot = await getDocs(categoriesCollectionRef);
+
+        // Extract category names from documents
+        const fetchedCategories = querySnapshot.docs.map((doc) => doc.data().name); 
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, [userEmail]); // Re-run if userEmail changes
+
+
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -85,8 +117,6 @@ function ProductForm({ onSubmit, existingProduct }) {
       reader.readAsDataURL(file); // This creates a base64-encoded string for the image
     }
   };
-  
-  
   
   return (
     <form
@@ -150,23 +180,23 @@ function ProductForm({ onSubmit, existingProduct }) {
           />
         </div>
 
-        {/* Category */}
         <div>
-          <label className="block text-gray-700 text-sm font-semibold">
-            Category
-          </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-          >
-            <option value="">Select Category</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Clothing">Clothing</option>
-            <option value="Home Appliances">Home Appliances</option>
-            <option value="Sports">Sports</option>
-          </select>
-        </div>
+      <label className="block text-gray-700 text-sm font-semibold">
+        Category
+      </label>
+      <select
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+        className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+      >
+        <option value="">Select Category</option>
+        {categories.map((cat, index) => (
+          <option key={index} value={cat}>
+            {cat}
+          </option>
+        ))}
+      </select>
+    </div>
 
         {/* Discount Price */}
         <div>
@@ -210,8 +240,7 @@ function ProductForm({ onSubmit, existingProduct }) {
           />
         </div>
 
-        {/* Availability */}
-        <div className="col-span-2">
+        <div>
           <label className="block text-gray-700 text-sm font-semibold">
             Product Availability
           </label>
@@ -225,8 +254,8 @@ function ProductForm({ onSubmit, existingProduct }) {
             <option value="Preorder">Preorder</option>
           </select>
         </div>
-
-        <div className="col-span-2">
+ {/* Product Image */}
+ <div className="col-span-2">
   <label className="block text-gray-700 text-sm font-semibold">
     Product Image
   </label>
@@ -245,8 +274,37 @@ function ProductForm({ onSubmit, existingProduct }) {
     </div>
   )}
 </div>
-
+{/* Best Offer Product Radio Button */}
+<div className="mt-4">
+        <label className="block text-gray-700 text-sm font-semibold mb-2">
+          Best Offer Product
+        </label>
+        <div className="flex items-center space-x-4">
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="bestOffer"
+              value="yes"
+              checked={isBestOffer}
+              onChange={() => setIsBestOffer(true)}
+              className="mr-2"
+            />
+            Yes
+          </label>
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="bestOffer"
+              value="no"
+              checked={!isBestOffer}
+              onChange={() => setIsBestOffer(false)}
+              className="mr-2"
+            />
+            No
+          </label>
+        </div>
       </div>
+       </div>
 
       <button
         type="submit"

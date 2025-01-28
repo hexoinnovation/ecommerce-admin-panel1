@@ -2,8 +2,9 @@ import React, { useState ,useEffect } from "react";
 import { CSVLink } from "react-csv"; // For exporting CSV
 import { FaPlusCircle, FaFileExport, FaTrashAlt, FaEdit, FaUpload } from "react-icons/fa"; // Icons for actions
 import Papa from "papaparse"; // Import papaparse for CSV parsing
-import { collection, addDoc,getDocs } from "firebase/firestore";
+import { collection, addDoc,getDocs ,doc,deleteDoc,updateDoc} from "firebase/firestore";
 import { db } from "./firebase";
+import { getAuth } from "firebase/auth";
 
 function Categories() {
   const [categories, setCategories] = useState([
@@ -21,12 +22,26 @@ function Categories() {
  useEffect(() => {
   const fetchCategories = async () => {
     try {
-      const categoriesCollectionRef = collection(db, "Categories");
+      // Get the currently signed-in user's email
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser || !currentUser.email) {
+        alert("No user is signed in. Please sign in to fetch categories.");
+        return;
+      }
+
+      const userEmail = currentUser.email;
+
+      // Path: "admin/{userEmail}/Categories"
+      const categoriesCollectionRef = collection(db, "admin", userEmail, "Categories");
+
       const querySnapshot = await getDocs(categoriesCollectionRef);
-      const categoriesList = querySnapshot.docs.map(doc => ({
+      const categoriesList = querySnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
+
       setCategories(categoriesList);
       setFilteredCategories(categoriesList); // Assuming you want to display all initially
     } catch (error) {
@@ -35,45 +50,115 @@ function Categories() {
   };
 
   fetchCategories();
-}, []);
+}, []); // Empty dependency array ensures it runs once on component mount
 
-  const handleAddCategory = async () => {
-    if (!categoryName.trim()) return;
-  
-    try {
-      // Path: "Categories" collection at the root level
-      const categoriesCollectionRef = collection(db, "Categories");
-  
-      // Add the new category to Firestore
-      const docRef = await addDoc(categoriesCollectionRef, { name: categoryName });
-      console.log("Category added with ID:", docRef.id);
-  
-      // Update local state (if you want to reflect the added category in the UI)
-      const newCategory = { id: docRef.id, name: categoryName }; // Use Firestore-generated ID
-      setCategories([...categories, newCategory]);
-      setCategoryName("");
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error("Error adding category:", error);
+const handleAddCategory = async () => {
+  if (!categoryName.trim()) {
+    alert("Category name cannot be empty!");
+    return;
+  }
+
+  try {
+    // Get the currently signed-in user's email
+    const auth = getAuth(); // Initialize Firebase Auth
+    const currentUser = auth.currentUser; // Get the currently signed-in user
+
+    if (!currentUser || !currentUser.email) {
+      alert("No user is signed in. Please sign in to add a category.");
+      return;
     }
-  };
 
-  // Handle deleting a category
-  const handleDeleteCategory = (categoryId) => {
+    const userEmail = currentUser.email; // Extract the email of the signed-in user
+
+    // Path: "admin/{userEmail}/Categories" collection
+    const categoriesCollectionRef = collection(db, "admin", userEmail, "Categories");
+
+    // Add the new category to Firestore
+    const docRef = await addDoc(categoriesCollectionRef, { name: categoryName });
+    console.log("Category added with ID:", docRef.id);
+
+    // Update local state (if you want to reflect the added category in the UI)
+    const newCategory = { id: docRef.id, name: categoryName }; // Use Firestore-generated ID
+    setCategories([...categories, newCategory]);
+    setCategoryName(""); // Clear the input field
+    setIsModalOpen(false); // Close the modal (if applicable)
+  } catch (error) {
+    console.error("Error adding category:", error);
+    alert("Failed to add category. Please try again.");
+  }
+};
+
+const handleDeleteCategory = async (categoryId) => {
+  try {
+    // Get the currently signed-in user's email
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser || !currentUser.email) {
+      alert("No user is signed in. Please sign in to delete a category.");
+      return;
+    }
+
+    const userEmail = currentUser.email;
+
+    // Path: "admin/{userEmail}/Categories/{categoryId}"
+    const categoryDocRef = doc(db, "admin", userEmail, "Categories", categoryId);
+
+    // Delete the document
+    await deleteDoc(categoryDocRef);
+
+    // Update local state
     setCategories(categories.filter((category) => category.id !== categoryId));
-  };
 
-  // Handle editing a category
-  const handleEditCategory = () => {
+    alert("Category deleted successfully!");
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    alert("Failed to delete category. Please try again.");
+  }
+};
+
+const handleEditCategory = async () => {
+  if (!categoryName.trim()) {
+    alert("Category name cannot be empty!");
+    return;
+  }
+
+  try {
+    // Get the currently signed-in user's email
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser || !currentUser.email) {
+      alert("No user is signed in. Please sign in to edit a category.");
+      return;
+    }
+
+    const userEmail = currentUser.email;
+
+    // Path: "admin/{userEmail}/Categories/{categoryId}"
+    const categoryDocRef = doc(db, "admin", userEmail, "Categories", editCategoryId);
+
+    // Update the category in Firestore
+    await updateDoc(categoryDocRef, { name: categoryName });
+
+    // Update the local state
     setCategories(
       categories.map((category) =>
         category.id === editCategoryId ? { ...category, name: categoryName } : category
       )
     );
+
+    // Clear input and close modal
     setCategoryName("");
     setEditCategoryId(null);
     setIsModalOpen(false);
-  };
+
+    alert("Category updated successfully!");
+  } catch (error) {
+    console.error("Error updating category:", error);
+    alert("Failed to update category. Please try again.");
+  }
+};
 
   // Handle deleting multiple categories
   const handleBulkDelete = () => {

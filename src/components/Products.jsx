@@ -237,6 +237,9 @@ useEffect(() => {
               <table className="w-full table-auto text-left">
                 <thead className="bg-indigo-600 text-white">
                   <tr>
+                  <th className="py-2 px-3 text-sm font-semibold">
+                     Image
+                    </th>
                     <th className="py-2 px-3 text-sm font-semibold">
                       Product Name
                     </th>
@@ -252,6 +255,18 @@ useEffect(() => {
                   {filteredProducts.length > 0 ? (
                     filteredProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-gray-50">
+                         <td className="py-2 px-3">
+              {product.image ? (
+                <img
+                  src={product.image} 
+                  alt={product.name}
+                  className="w-14 h-14 object-cover rounded-full"
+                />
+              ) : (
+                <span>No image</span>
+              )}
+            
+            </td>
                         <td className="py-2 px-3">{product.name}</td>
                         <td className="py-2 px-3">₹{product.price}</td>
                         <td className="py-2 px-3">₹{product.discountPrice}</td>

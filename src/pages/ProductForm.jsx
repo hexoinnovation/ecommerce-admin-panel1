@@ -105,6 +105,19 @@ function ProductForm({ onSubmit, existingProduct }) {
     fetchCategories();
   }, [userEmail]); // Re-run if userEmail changes
 
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        // Save the base64 string to the image state for submitting
+        setImage(event.target.result);  // This will save the base64-encoded string
+      };
+      reader.readAsDataURL(file); // This creates a base64-encoded string for the image
+    }
+  };
+  
   return (
     <form
       onSubmit={handleSubmit}
@@ -242,25 +255,25 @@ function ProductForm({ onSubmit, existingProduct }) {
           </select>
         </div>
  {/* Product Image */}
-        <div>
-          <label className="block text-gray-700 text-sm font-semibold">
-          Product Image
-          </label>
-          <input
-            type="file"
-            onChange={(e) => setImage(URL.createObjectURL(e.target.files[0]))}
-            className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-          />
-          {image && (
-            <div className="mt-4">
-              <img
-                src={image}
-                alt="Product Preview"
-                className="max-w-full h-auto rounded-md"
-              />
-            </div>
-          )}
-        </div>
+ <div className="col-span-2">
+  <label className="block text-gray-700 text-sm font-semibold">
+    Product Image
+  </label>
+  <input
+    type="file"
+    onChange={handleImageUpload}
+    className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+  />
+  {image && (
+    <div className="mt-4">
+      <img
+        src={image}
+        alt="Product Preview"
+        className="max-w-full h-auto rounded-md"
+      />
+    </div>
+  )}
+</div>
 {/* Best Offer Product Radio Button */}
 <div className="mt-4">
         <label className="block text-gray-700 text-sm font-semibold mb-2">

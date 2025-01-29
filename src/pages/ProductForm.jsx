@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { collection, addDoc,getDocs,doc,getDoc,setDoc} from "firebase/firestore";
+import { db,auth } from "../components/firebase";
 
 // Assuming the ProductForm component handles the form for adding/editing products
 function ProductForm({ onSubmit, existingProduct }) {
@@ -21,6 +23,7 @@ function ProductForm({ onSubmit, existingProduct }) {
   const [taxClass, setTaxClass] = useState(""); // Tax Class
   const [productUrl, setProductUrl] = useState(""); // Product URL
   const [availability, setAvailability] = useState("In Stock"); // Product availability
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -47,6 +50,8 @@ function ProductForm({ onSubmit, existingProduct }) {
       taxClass,
       productUrl,
       availability,
+      isBestOffer, // ✅ Added Best Offer Product in data
+      
     };
 
     onSubmit(productData);
@@ -71,7 +76,34 @@ function ProductForm({ onSubmit, existingProduct }) {
     setTaxClass(""); // Clear tax class
     setProductUrl(""); // Clear product URL
     setAvailability("In Stock"); // Clear availability
+    setIsBestOffer(false); // ✅ Reset Best Offer Product selection
   };
+
+
+
+  const [isBestOffer, setIsBestOffer] = useState(false); // State for radio button
+   const [categories, setCategories] = useState([]); // Store fetched categories
+ 
+   // Get current user email
+   const userEmail = auth.currentUser?.email; 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      if (!userEmail) return; // Ensure user is logged in
+
+      try {
+        const categoriesCollectionRef = collection(db, "admin", userEmail, "Categories");
+        const querySnapshot = await getDocs(categoriesCollectionRef);
+
+        // Extract category names from documents
+        const fetchedCategories = querySnapshot.docs.map((doc) => doc.data().name); 
+        setCategories(fetchedCategories);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, [userEmail]); // Re-run if userEmail changes
 
   return (
     <form
@@ -135,23 +167,23 @@ function ProductForm({ onSubmit, existingProduct }) {
           />
         </div>
 
-        {/* Category */}
         <div>
-          <label className="block text-gray-700 text-sm font-semibold">
-            Category
-          </label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
-          >
-            <option value="">Select Category</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Clothing">Clothing</option>
-            <option value="Home Appliances">Home Appliances</option>
-            <option value="Sports">Sports</option>
-          </select>
-        </div>
+      <label className="block text-gray-700 text-sm font-semibold">
+        Category
+      </label>
+      <select
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+        className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400"
+      >
+        <option value="">Select Category</option>
+        {categories.map((cat, index) => (
+          <option key={index} value={cat}>
+            {cat}
+          </option>
+        ))}
+      </select>
+    </div>
 
         {/* Discount Price */}
         <div>
@@ -195,8 +227,7 @@ function ProductForm({ onSubmit, existingProduct }) {
           />
         </div>
 
-        {/* Availability */}
-        <div className="col-span-2">
+        <div>
           <label className="block text-gray-700 text-sm font-semibold">
             Product Availability
           </label>
@@ -210,11 +241,10 @@ function ProductForm({ onSubmit, existingProduct }) {
             <option value="Preorder">Preorder</option>
           </select>
         </div>
-
-        {/* Product Image */}
-        <div className="col-span-2">
+ {/* Product Image */}
+        <div>
           <label className="block text-gray-700 text-sm font-semibold">
-            Product Image
+          Product Image
           </label>
           <input
             type="file"
@@ -231,7 +261,37 @@ function ProductForm({ onSubmit, existingProduct }) {
             </div>
           )}
         </div>
+{/* Best Offer Product Radio Button */}
+<div className="mt-4">
+        <label className="block text-gray-700 text-sm font-semibold mb-2">
+          Best Offer Product
+        </label>
+        <div className="flex items-center space-x-4">
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="bestOffer"
+              value="yes"
+              checked={isBestOffer}
+              onChange={() => setIsBestOffer(true)}
+              className="mr-2"
+            />
+            Yes
+          </label>
+          <label className="flex items-center">
+            <input
+              type="radio"
+              name="bestOffer"
+              value="no"
+              checked={!isBestOffer}
+              onChange={() => setIsBestOffer(false)}
+              className="mr-2"
+            />
+            No
+          </label>
+        </div>
       </div>
+       </div>
 
       <button
         type="submit"

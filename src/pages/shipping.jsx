@@ -15,6 +15,8 @@ const ShippingSettings = () => {
     { id: 2, region: 'Mumbai', shippingCost: 100 },
     { id: 3, region: 'Bengaluru', shippingCost: 75 },
   ]);
+
+
   
   const [newRegion, setNewRegion] = useState('');
   const [newRegionCost, setNewRegionCost] = useState(0);

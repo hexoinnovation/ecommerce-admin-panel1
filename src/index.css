@@ -14,3 +14,15 @@ code {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* src/index.css or src/tailwind.css */
+:root {
+  --primary-color: #3b82f6; /* Default color */
+}
+
+/* Dynamically change primary color based on the --primary-color variable */
+.bg-primary {
+  background-color: var(--primary-color);
+}
+.text-primary {
+  color: var(--primary-color);
+}

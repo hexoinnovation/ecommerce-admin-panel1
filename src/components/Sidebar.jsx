@@ -1,151 +1,236 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { IoClose } from "react-icons/io5"; // Import Close icon from react-icons
+import { FaCog } from "react-icons/fa"; // Import settings icon for "Choose Layout"
 
-function Sidebar({ setIsAuthenticated, userProfile = {} }) {
-  const [isOpen, setIsOpen] = useState(false); // Sidebar toggle for mobile menu
-  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false); // Toggle settings dropdown
+const Sidebar = ({
+  setIsAuthenticated,
+  sidebarWidth = "250px",
+  changeLayout,
+  sidebarColor = "#1f2937", // Default dark color for sidebar
+}) => {
+  const [isModalOpen, setIsModalOpen] = useState(false); // State for popup modal visibility
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // State to toggle sidebar visibility
 
+  // Logout functionality
   const handleLogout = () => {
     setIsAuthenticated(false);
     window.location.href = "/login"; // Redirect to login page
   };
 
+  // Toggle sidebar visibility
   const toggleSidebar = () => {
-    setIsOpen(!isOpen); // Toggle mobile sidebar open/close
+    setIsSidebarOpen(!isSidebarOpen);
   };
 
-  const toggleSettingsMenu = () => {
-    setIsSettingsMenuOpen(!isSettingsMenuOpen); // Toggle settings dropdown
+  // Toggle modal visibility
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen">
-      {/* Mobile Hamburger Icon */}
-      <div className="lg:hidden p-2">
-        <button
-          onClick={toggleSidebar}
-          className="text-white focus:outline-none"
+    <div
+      className={`min-h-screen flex flex-col lg:flex-row overflow-y-auto ${
+        isSidebarOpen ? "w-64" : "w-20"
+      } transition-all duration-300 ease-in-out`}
+      style={{
+        backgroundColor: sidebarColor, // Dark color for sidebar background
+      }}
+    >
+      {/* Sidebar Content */}
+      <div className="flex flex-col justify-between flex-grow p-6">
+        {/* Toggle button for small screen */}
+        <div className="lg:hidden flex justify-between items-center mb-6">
+          <button
+            onClick={toggleSidebar}
+            className="text-white p-2 rounded bg-indigo-700 hover:bg-indigo-600"
+          >
+            {isSidebarOpen ? "Close" : "Open"} Sidebar
+          </button>
+        </div>
+
+        {/* Sidebar Title */}
+        <h2
+          className={`text-2xl font-semibold  text-white transition-all duration-300 ${
+            isSidebarOpen ? "block" : "hidden"
+          }`}
         >
-          <i
-            className={`fas ${
-              isOpen ? "fa-times" : "fa-bars"
-            } text-2xl text-black`}
-          ></i>
-        </button>
-      </div>
+          E-Com Admin Panel
+        </h2>
 
-      {/* Sidebar */}
-      <div
-        className={`lg:w-64 min-h-screen bg-gradient-to-b from-indigo-700 to-indigo-900 text-white p-4 flex flex-col shadow-lg transition-transform duration-300 ease-in-out ${
-          isOpen ? "transform-none" : "-translate-x-full"
-        } lg:translate-x-0 fixed lg:relative top-0 left-0 z-80`}
-      >
-        <div className="text-center mb-3">
-          <h2 className="text-xl font-semibold">E-Com Admin Panel</h2>
-        </div>
+        {/* Sidebar navigation links */}
+        <ul className="space-y-6 mt-9 flex flex-col">
+          <li>
+            <Link
+              to="/"
+              className="text-white hover:bg-indigo-600 p-3 rounded-lg transition text-1xl duration-200 ease-in-out"
+            >
+              Dashboard
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/products"
+              className="text-white hover:bg-indigo-600 p-3 rounded-lg text-1xl transition duration-200 ease-in-out"
+            >
+              Products
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/orders"
+              className="text-white hover:bg-indigo-600 p-3 text-1xl rounded-lg transition duration-200 ease-in-out"
+            >
+              Orders
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/customers"
+              className="text-white hover:bg-indigo-600 p-3 text-1xl rounded-lg transition duration-200 ease-in-out"
+            >
+              Customers
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/categories"
+              className="text-white hover:bg-indigo-600 text-1xl p-3 rounded-lg transition duration-200 ease-in-out"
+            >
+              Categories
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/coupons"
+              className="text-white hover:bg-indigo-600 text-1xl p-3 rounded-lg transition duration-200 ease-in-out"
+            >
+              Coupons
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/vendors"
+              className="text-white hover:bg-indigo-600 p-3  text-1xl rounded-lg transition duration-200 ease-in-out"
+            >
+              Vendors
+            </Link>
+          </li>
 
-        {/* User Profile Section */}
-        <div className="mb-4 flex items-center space-x-2">
-          <div className="relative">
-            <img
-              src={userProfile.avatarUrl || "/default-avatar.png"} // Provide a fallback URL if avatarUrl is undefined
-              alt="User Profile"
-              className="w-8 h-8 rounded-full object-cover"
-            />
-          </div>
-          <div>
-            <p className="text-sm font-semibold">
-              {userProfile.name || "User Name"}
-            </p>
-            <p className="text-xs text-gray-300">
-              {userProfile.email || "user@example.com"}
-            </p>
-          </div>
-        </div>
-
-        {/* Navigation Links */}
-        <ul className="flex-grow space-y-2">
-          <li className="hover:bg-indigo-600 hover:text-white p-1 rounded-lg transition duration-150 ease-in-out transform hover:scale-105">
-            <Link to="/">Dashboard</Link>
-          </li>
-          <li className="hover:bg-indigo-600 hover:text-white p-1 rounded-lg transition duration-150 ease-in-out transform hover:scale-105">
-            <Link to="/products">Products</Link>
-          </li>
-          <li className="hover:bg-indigo-600 hover:text-white p-1 rounded-lg transition duration-150 ease-in-out transform hover:scale-105">
-            <Link to="/orders">Orders</Link>
-          </li>
-          <li className="hover:bg-indigo-600 hover:text-white p-1 rounded-lg transition duration-150 ease-in-out transform hover:scale-105">
-            <Link to="/customers">Customers</Link>
-          </li>
-          <li className="hover:bg-indigo-600 hover:text-white p-1 rounded-lg transition duration-150 ease-in-out transform hover:scale-105">
-            <Link to="/categories">Categories</Link>
-          </li>
-          <li className="hover:bg-indigo-600 hover:text-white p-1 rounded-lg transition duration-150 ease-in-out transform hover:scale-105">
-            <Link to="/coupons">Coupons</Link>
-          </li>
-          <li className="hover:bg-indigo-600 hover:text-white p-1 rounded-lg transition duration-150 ease-in-out transform hover:scale-105">
-            <Link to="/vendors">Vendors</Link>
-          </li>
-          {/* Additional Controls for eCommerce Admin Panel */}
-          <li className="hover:bg-indigo-600 hover:text-white p-1 rounded-lg transition duration-150 ease-in-out transform hover:scale-105">
-            <Link to="/payments">Payment Methods</Link>
-          </li>
-          <li className="hover:bg-indigo-600 hover:text-white p-1 rounded-lg transition duration-150 ease-in-out transform hover:scale-105">
-            <Link to="/shipping">Shipping Settings</Link>
-          </li>
-          <li className="hover:bg-indigo-600 hover:text-white p-1 rounded-lg transition duration-150 ease-in-out transform hover:scale-105">
-            <Link to="/reports">Reports</Link>
+          {/* Profile Settings moved under Vendors */}
+          <li>
+            <Link
+              to="/profile"
+              className="text-white hover:bg-indigo-600 p-3 text-1xl rounded-lg transition duration-200 ease-in-out"
+            >
+              Profile Settings
+            </Link>
           </li>
         </ul>
 
-        {/* Settings Dropdown */}
+        {/* Logout Button */}
         <div className="mt-4">
           <button
-            onClick={toggleSettingsMenu} // Toggle settings menu dropdown
-            className="w-full text-white py-2 px-3 bg-indigo-500 rounded-lg hover:bg-indigo-400 transition duration-150 ease-in-out"
-          >
-            Settings
-          </button>
-
-          {/* Settings Dropdown Menu (one-by-one display) */}
-          {isSettingsMenuOpen && (
-            <div className="space-y-1 mt-2 bg-indigo-800 p-3 rounded-lg shadow-lg">
-              <Link
-                to="/profile"
-                className="block text-white py-1 px-4 hover:bg-indigo-700 rounded-lg"
-              >
-                View Profile
-              </Link>
-              <Link
-                to="/account-settings"
-                className="block text-white py-1 px-4 hover:bg-indigo-700 rounded-lg"
-              >
-                Account Settings
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* Logout Button */}
-        <div className="mt-4 space-y-2">
-          <button
             onClick={handleLogout}
-            className="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition duration-150 ease-in-out transform hover:scale-105"
+            className="mt-4 bg-red-600 text-white font-bold  text-1xl py-2 px-4 rounded w-full hover:bg-red-700"
           >
             Logout
           </button>
         </div>
+
+        {/* Choose Layout button with Icon style */}
+        <div className="lg:mt-6 mt-4 flex justify-center items-center">
+          <button
+            onClick={toggleModal}
+            className="bg-purple-700 text-white p-3 rounded-full focus:outline-none hover:bg-purple-600 transition duration-200 ease-in-out"
+            aria-label="Choose Layout"
+          >
+            <FaCog size={24} />
+          </button>
+        </div>
       </div>
 
-      {/* Overlay for mobile sidebar */}
-      <div
-        className={`${
-          isOpen ? "block" : "hidden"
-        } fixed top-0 left-0 w-full h-screen bg-black opacity-50 lg:hidden`}
-        onClick={toggleSidebar} // Close sidebar when overlay is clicked
-      ></div>
+      {/* Modal Popup for Layout Selection */}
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={toggleModal}
+        >
+          <div
+            className="bg-white p-6 rounded-lg w-72 space-y-4"
+            onClick={(e) => e.stopPropagation()} // Prevent click propagation to close the modal
+          >
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-semibold">Select a Layout</h3>
+              <button
+                onClick={toggleModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <IoClose size={24} />
+              </button>
+            </div>
+            <ul>
+              <li>
+                <button
+                  onClick={() => {
+                    changeLayout("professional");
+                    toggleModal();
+                  }}
+                  className="block w-full text-left py-2 px-4 hover:bg-indigo-600"
+                >
+                  Professional Layout
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    changeLayout("modern");
+                    toggleModal();
+                  }}
+                  className="block w-full text-left py-2 px-4 hover:bg-pink-600"
+                >
+                  Modern Layout
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    changeLayout("dark");
+                    toggleModal();
+                  }}
+                  className="block w-full text-left py-2 px-4 hover:bg-indigo-600"
+                >
+                  Dark Layout
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    changeLayout("vibrant");
+                    toggleModal();
+                  }}
+                  className="block w-full text-left py-2 px-4 hover:bg-orange-600"
+                >
+                  Vibrant Layout
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => {
+                    changeLayout("elegant");
+                    toggleModal();
+                  }}
+                  className="block w-full text-left py-2 px-4 hover:bg-purple-600"
+                >
+                  Elegant Layout
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default Sidebar;

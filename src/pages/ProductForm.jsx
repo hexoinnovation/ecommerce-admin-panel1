@@ -25,6 +25,7 @@ function ProductForm({ onSubmit, existingProduct }) {
   const [availability, setAvailability] = useState("In Stock"); // Product availability
 
 
+  
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -117,7 +118,7 @@ function ProductForm({ onSubmit, existingProduct }) {
       reader.readAsDataURL(file); // This creates a base64-encoded string for the image
     }
   };
-  
+
   return (
     <form
       onSubmit={handleSubmit}

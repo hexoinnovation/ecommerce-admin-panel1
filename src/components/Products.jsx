@@ -11,13 +11,12 @@ function Products() {
   const [searchQuery, setSearchQuery] = useState(""); // For search/filter functionality
   const [categoryFilter, setCategoryFilter] = useState(""); // Filter by category
   const [modalVisible, setModalVisible] = useState(false); // Show/hide modal for product list
-
-  const categories = ["Electronics", "Clothing", "Home Appliances", "Sports"]; // Example categories
-
+  const [categories, setCategories] = useState([]);
   const currentUser = useAuth(); // Get the current user
   const sanitizedEmail = currentUser?.email?.replace(/\s/g, "_");
   const [filteredProduct, setFilteredProducts] = useState([]);
-
+  const auth = getAuth();
+  const userEmail = auth.currentUser ? auth.currentUser.email : null;
   useEffect(() => {
     // Fetch products from Firebase and update the local state
     const fetchProducts = async () => {
@@ -174,6 +173,26 @@ useEffect(() => {
   fetchProducts();
 }, []); // Dependency array, no additional dependencies required here
 
+useEffect(() => {
+  if (!userEmail) return; // Prevent fetching if userEmail is not available
+  
+  const fetchCategories = async () => {
+    try {
+      const categoriesCollectionRef = collection(db, "admin", userEmail, "Categories");
+      const categorySnapshot = await getDocs(categoriesCollectionRef);
+      
+      // Fetching categories (documents inside Categories collection)
+      const categoryList = categorySnapshot.docs.map((doc) => doc.data().name); // Assuming each category has a `name` field
+      setCategories(categoryList);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  fetchCategories();
+}, [userEmail]);
+
+
   return (
     <div className="space-y-6">
       {/* Product Form Title and Show Product List Button in same row */}
@@ -218,19 +237,34 @@ useEffect(() => {
 
             {/* Category Filter */}
             <div className="flex justify-between items-center mb-4">
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full sm:w-1/3 p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">All Categories</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
+      <select
+        value={categoryFilter}
+        onChange={(e) => setCategoryFilter(e.target.value)}
+        className="w-full sm:w-1/3 p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      >
+        <option value="">All Categories</option>
+        {categories.map((category, index) => (
+          <option key={index} value={category}>
+            {category}
+          </option>
+        ))}
+      </select>
+    </div>
+
+            {/* <div className="flex justify-between items-center mb-4">
+      <select
+        value={categoryFilter}
+        onChange={(e) => setCategoryFilter(e.target.value)}
+        className="w-full sm:w-1/3 p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      >
+        <option value="">All Categories</option>
+        {categories.map((category) => (
+          <option key={category} value={category}>
+            {category}
+          </option>
+        ))}
+      </select>
+    </div> */}
 
             {/* Product Table */}
             <div className="overflow-x-auto bg-white rounded-lg shadow-md mb-4">

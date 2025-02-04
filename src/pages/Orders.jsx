@@ -89,10 +89,10 @@ function Orders(order ) {
     console.log("Notification clicked, highlightedOrderId:", orderId);
     setHighlightedOrderId(orderId);  
   };
-  const [loading, setLoading] = useState(true);
+ 
   useEffect(() => {
    
-    
+
   }, [highlightedOrderId]); 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -127,21 +127,12 @@ function Orders(order ) {
       } catch (error) {
         console.error("Error fetching orders:", error);
       } finally {
-        setLoading(false);
+        
       }
     };
   
     fetchOrders();
   }, []);
-  
-  if (loading) {
-    return <p className="text-center text-gray-600">Loading orders...</p>;
-  }
-
-  if (orders.length === 0) {
-    return <p className="text-center text-gray-600">No orders found.</p>;
-  }
- ;
 
   const handleOrderSelect = (orderId) => {
     setSelectedOrders((prev) =>
@@ -288,42 +279,38 @@ const handleStatusChange = async (orderId, newStatus) => {
 
         </div>
       </div>
-      <div className="grid grid-cols-3 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-      {filteredOrders.map((order) => {
-        const isHighlighted = String(highlightedOrderId) === String(order.id);
-       
+      <div className="grid grid-cols-3 lg:grid-cols-2 gap-6 mt-6">
+  {filteredOrders.map((order) => {
+    const isHighlighted = String(highlightedOrderId) === String(order.id);
 
-        return (
-          <div
-            key={order.id}
-            className={`border rounded-lg p-6 shadow-lg hover:shadow-2xl transition duration-300 ${
-              isHighlighted
-                ? "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white"
-                : "bg-white"
-            }`}
-          >
-      
+    return (
+      <div
+        key={order.id}
+        className={`border rounded-lg p-6 shadow-lg hover:shadow-2xl transition duration-300 ${
+          isHighlighted
+            ? "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white"
+            : "bg-white"
+        }`}
+      >
         <div className="flex items-center space-x-2">
-        <input 
-     className="form-checkbox h-5 w-5 text-indigo-600"
-  type="checkbox" 
-  checked={selectedOrders.includes(order.id)} 
-  onChange={() => handleOrderSelect(order.id)}
-/>
-
+          <input 
+            className="form-checkbox h-5 w-5 text-indigo-600"
+            type="checkbox"
+            checked={selectedOrders.includes(order.id)}
+            onChange={() => handleOrderSelect(order.id)}
+          />
           <h3 className="text-xl font-semibold text-indigo-600">
             {order.fullName || order.userEmail}
           </h3>
         </div>
+
         <p className="text-gray-600">
           <strong>Order ID:</strong> {order.id}
         </p>
-        {/* <p className="text-gray-600">
-          <strong>Product Details:</strong> {order.productName || "N/A"}
-        </p> */}
-       <p className="text-gray-600">
-  <strong>Order Date:</strong> {new Date(order.timestamp.seconds * 1000).toLocaleString()}
-</p>
+
+        <p className="text-gray-600">
+          <strong>Order Date:</strong> {new Date(order.timestamp.seconds * 1000).toLocaleString()}
+        </p>
 
         <p className="text-l mt-2">
           <strong>Status:</strong>
@@ -339,7 +326,8 @@ const handleStatusChange = async (orderId, newStatus) => {
             {order.status}
           </span>
         </p>
-        <div className="mt-4 space-x-2">
+
+        <div className="mt-4 flex flex-wrap lg:flex-nowrap space-x-1">
           <button
             onClick={() => handleStatusChange(order.id, "Shipped")}
             className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
@@ -363,6 +351,7 @@ const handleStatusChange = async (orderId, newStatus) => {
     );
   })}
 </div>
+
 
 <div className="mt-4">
   <button

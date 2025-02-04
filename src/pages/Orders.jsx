@@ -54,14 +54,7 @@ function Orders(order ) {
     setSelectedOrder(null);
   };
 
-  const handleBulkMarkPaid = () => {
-    setOrders(
-      orders.map((order) =>
-        selectedOrders.includes(order.id) ? { ...order, paid: true } : order
-      )
-    );
-    setSelectedOrders([]); 
-  };
+  
   const handleExportOrders = () => {
     const csvContent = [
       ["Order ID", "Customer", "Total", "Status", "Paid"],
@@ -283,15 +276,12 @@ const handleStatusChange = async (orderId, newStatus) => {
   {filteredOrders.map((order) => {
     const isHighlighted = String(highlightedOrderId) === String(order.id);
 
-    
+
     return (
       <div
         key={order.id}
-        className={`border rounded-lg p-6 shadow-lg hover:shadow-2xl transition duration-300 ${
-          isHighlighted
-            ? "bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white"
-            : "bg-white"
-        }`}
+        className="border rounded-lg p-6 shadow-lg hover:shadow-2xl transition duration-300 bg-white"
+         
       >
         <div className="flex items-center space-x-2">
           <input 
@@ -306,7 +296,7 @@ const handleStatusChange = async (orderId, newStatus) => {
         </div>
 
         <p className="text-gray-600">
-          <strong>Order ID:</strong> {order.id}
+          <strong>Order ID:</strong> #{order.id}
         </p>
 
         <p className="text-gray-600">
@@ -314,7 +304,7 @@ const handleStatusChange = async (orderId, newStatus) => {
         </p>
 
         <p className="text-l mt-2">
-          <strong>Status:</strong>
+          <strong>Status : </strong>
           <span
             className={`text-${
               order.status === "Shipped"
@@ -328,7 +318,7 @@ const handleStatusChange = async (orderId, newStatus) => {
           </span>
         </p>
 
-        <div className="mt-4 flex flex-wrap lg:flex-nowrap space-x-1">
+        <div className="mt-4 flex flex-wrap lg:flex-nowrap space-x-5">
           <button
             onClick={() => handleStatusChange(order.id, "Shipped")}
             className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"

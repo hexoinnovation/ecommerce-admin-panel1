@@ -180,6 +180,7 @@ function ProfileDashboard({ setIsAuthenticated }) {
     }
   };
 
+  
 
   const handleUpdateBusiness = async (e) => {
     e.preventDefault();

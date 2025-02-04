@@ -1,12 +1,17 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc,updateDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../components/firebase"; // Import Firebase auth methods
 import { db } from "../components/firebase"; // Firebase config
+import { getAuth,onAuthStateChanged  } from "firebase/auth";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons
+import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 
 function ProfileDashboard({ setIsAuthenticated }) {
-  const [user, setUser] = useState(null);
+  const auth = getAuth();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [users, setUser] = useState(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -22,9 +27,6 @@ function ProfileDashboard({ setIsAuthenticated }) {
   const [selectedTab, setSelectedTab] = useState("business"); // Active tab
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [securitySettings, setSecuritySettings] = useState({
     twoFactorAuth: false,
   });
@@ -45,10 +47,10 @@ function ProfileDashboard({ setIsAuthenticated }) {
         const userDoc = await getDoc(userRef);
         if (userDoc.exists()) {
           setUser(userDoc.data());
-          setName(userDoc.data().name);
-          setEmail(userDoc.data().email);
-          setPhone(userDoc.data().phone || "");
-          setAddress(userDoc.data().address || "");
+          // setName(userDoc.data().name);
+          // setEmail(userDoc.data().email);
+          // setPhone(userDoc.data().phone || "");
+          // setAddress(userDoc.data().address || "");
           setBusinessName(userDoc.data().businessName || "");
           setWebsite(userDoc.data().website || "");
           setSocialLinks(
@@ -73,110 +75,8 @@ function ProfileDashboard({ setIsAuthenticated }) {
     fetchUserProfile();
   }, [navigate]);
 
-  // Function to handle updating business details
-  const handleUpdateBusiness = async (e) => {
-    e.preventDefault();
-    try {
-      const userRef = doc(db, "admin", email);
-      await setDoc(
-        userRef,
-        {
-          businessName,
-          website,
-          socialLinks,
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
+ 
 
-      setError(""); // Clear any previous error message
-      setSuccess("Business details updated successfully!");
-    } catch (err) {
-      setError("Error updating business details. Please try again.");
-      console.error(err);
-    }
-  };
-
-  // Function to handle updating the profile (name, phone, address)
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    try {
-      let imageUrl = user?.profileImage || ""; // Default to existing image if not updated
-
-      // If a new image is uploaded, upload to Firebase Storage
-      if (profileImage) {
-        const imageRef = ref(storage, `profileImages/${email}`);
-        await uploadBytes(imageRef, profileImage);
-        imageUrl = await getDownloadURL(imageRef);
-      }
-
-      const userRef = doc(db, "admin", email);
-      await setDoc(
-        userRef,
-        {
-          name: name,
-          email: email,
-          phone: phone,
-          address: address,
-          businessName: businessName,
-          website: website,
-          socialLinks: socialLinks,
-          profileImage: imageUrl,
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
-
-      setError(""); // Clear any previous error message
-      setSuccess("Profile updated successfully!");
-    } catch (err) {
-      setError("Error updating profile. Please try again.");
-      console.error(err);
-    }
-  };
-
-  // Function to handle password change
-  const handlePasswordChange = async (e) => {
-    e.preventDefault();
-
-    if (newPassword !== confirmPassword) {
-      setError("New passwords do not match.");
-      return;
-    }
-
-    // Here, we assume you check the current password before updating
-    // For now, we're just simulating this validation.
-    if (currentPassword !== user?.password) {
-      setError("Current password is incorrect.");
-      return;
-    }
-
-    try {
-      const userRef = doc(db, "admin", email);
-      await setDoc(
-        userRef,
-        {
-          password: newPassword, // Update the password in Firestore
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
-
-      setError("");
-      setSuccess("Password updated successfully!");
-    } catch (err) {
-      setError("Error updating password.");
-      console.error(err);
-    }
-  };
-
-  // Handle file upload for profile picture
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfileImage(file);
-    }
-  };
 
   // Handle changes to security settings
   const handleSecuritySettingsChange = (e) => {
@@ -187,6 +87,215 @@ function ProfileDashboard({ setIsAuthenticated }) {
     }));
   };
 
+
+  
+  // Listen for auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user) setEmail(user.email);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Fetch profile data when profile tab is selected and currentUser exists
+  useEffect(() => {
+    if (selectedTab === "profile" && currentUser) {
+      fetchProfileData();
+    }
+  }, [selectedTab, currentUser]);
+
+  const fetchProfileData = async () => {
+    if (!currentUser || !phone) {
+      console.log("No current user or phone number");
+      return;
+    }
+
+    const userEmail = currentUser.email;
+    const profileDocRef = doc(db, "admin", userEmail, "ProfileinfoData", phone);
+
+    try {
+      const docSnap = await getDoc(profileDocRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setName(data.name || "");
+        setPhone(data.phone || "");
+        setAddress(data.address || "");
+        setProfileImage(data.profileImage || null);
+        setEmail(currentUser.email);  // Set the email from the current user
+      } else {
+        console.log("No profile data found at this path");
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
+    if (!currentUser || !currentUser.email) {
+      alert("No user is signed in. Please sign in to update the profile.");
+      return;
+    }
+
+    if (!phone) {
+      alert("Please enter a phone number to store the profile.");
+      return;
+    }
+
+    const userEmail = currentUser.email;
+
+    try {
+      // Firestore document reference in "admin/{userEmail}/ProfileinfoData/{phone}"
+      const profileDocRef = doc(db, "admin", userEmail, "ProfileinfoData", phone);
+
+      const profileData = {
+        name,
+        email: userEmail, 
+        phone,
+        address,
+        profileImage: profileImage ? profileImage.name : "", // Storing file name if image exists
+      };
+
+      // Use `setDoc` with `{ merge: true }` to avoid overwriting existing data
+      await setDoc(profileDocRef, profileData, { merge: true });
+
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile. Please try again.");
+    }
+  };
+
+  // Handle image change
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImage(file);
+    }
+  };
+
+
+  const handleUpdateBusiness = async (e) => {
+    e.preventDefault();
+  
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+  
+    if (!currentUser || !currentUser.email) {
+      alert("No user is signed in. Please sign in to update business details.");
+      return;
+    }
+  
+    if (!businessName) {
+      alert("Please enter a Business Name.");
+      return;
+    }
+  
+    const userEmail = currentUser.email; // Authenticated user email
+  
+    try {
+      // ✅ Firestore document reference in "admin/{userEmail}/Business Details/{Business Name}"
+      const businessDocRef = doc(db, "admin", userEmail, "Business Details", businessName);
+  
+      const businessData = {
+        businessName,
+        website,
+        socialLinks,
+      };
+  
+      // ✅ Use `setDoc` with `{ merge: true }` to avoid overwriting existing data
+      await setDoc(businessDocRef, businessData, { merge: true });
+  
+      alert("Business details updated successfully!");
+    } catch (error) {
+      console.error("Error updating business details: ", error);
+      alert("Failed to update business details. Please try again.");
+    }
+  };
+
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const user = auth.currentUser;
+
+  useEffect(() => {
+    if (user && user.email) {
+      fetchPassword(user.email);
+    }
+  }, [user]);
+
+  const fetchPassword = async (email) => {
+    try {
+      const userRef = doc(db, `admin/${email}`);
+      const docSnap = await getDoc(userRef);
+
+      if (docSnap.exists()) {
+        setCurrentPassword(docSnap.data().password); // ⚠️ Only for debugging (avoid showing plaintext password)
+      } else {
+        console.error("No user data found.");
+      }
+    } catch (error) {
+      console.error("Error fetching password:", error);
+    }
+  };
+
+ // Separate state variables for visibility toggling
+ const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+ const [showNewPassword, setShowNewPassword] = useState(false);
+ const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!newPassword || !confirmPassword) {
+        setError("Both password fields are required!");
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        setError("Passwords do not match!");
+        return;
+    }
+
+    try {
+        // Get the currently logged-in user
+        const user = auth.currentUser;
+        if (!user) {
+            setError("No user is currently signed in.");
+            return;
+        }
+
+        // Prompt user for their current password (or retrieve it from input field)
+        const credential = EmailAuthProvider.credential(user.email, currentPassword);
+        
+        // Re-authenticate the user
+        await reauthenticateWithCredential(user, credential);
+
+        // If re-authentication is successful, update the password
+        await updatePassword(user, newPassword);
+        
+        setError(""); // Clear errors
+        alert("Password updated successfully!");
+    } catch (err) {
+        if (err.code === "auth/wrong-password") {
+            setError("Incorrect current password. Please try again.");
+        } else if (err.code === "auth/too-many-requests") {
+            setError("Too many failed attempts. Please try again later.");
+        } else {
+            setError(`Error updating password: ${err.message}`);
+        }
+        console.error(err);
+    }
+};
+
   return (
     <div className="min-h-500px bg-blue-200 flex">
       {/* Sidebar */}
@@ -194,14 +303,14 @@ function ProfileDashboard({ setIsAuthenticated }) {
         <h2 className="text-2xl font-semibold mb-8">Admin Dashboard</h2>
         <ul className="space-y-4">
           <li>
-            <button
-              className={`w-full text-left py-2 px-4 rounded-lg ${
-                selectedTab === "profile" ? "bg-indigo-600" : "bg-indigo-500"
-              } hover:bg-indigo-600 focus:outline-none`}
-              onClick={() => setSelectedTab("profile")}
-            >
-              Profile Settings
-            </button>
+          <button
+        className={`w-full text-left py-2 px-4 rounded-lg ${
+          selectedTab === "profile" ? "bg-indigo-600" : "bg-indigo-500"
+        } hover:bg-indigo-600 focus:outline-none`}
+        onClick={() => setSelectedTab("profile")}
+      >
+        Profile Settings
+      </button>
           </li>
           <li>
             <button
@@ -249,114 +358,102 @@ function ProfileDashboard({ setIsAuthenticated }) {
           )}
 
           {/* Profile Settings Tab */}
-          {selectedTab === "profile" && (
+          {selectedTab === "profile" && currentUser && (
             <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
               <h3 className="text-xl font-semibold text-gray-700 mb-4">
                 Personal Information
               </h3>
               <form onSubmit={handleUpdateProfile} className="space-y-4">
-                {/* Profile Photo */}
-                <div>
-                  <label
-                    htmlFor="profileImage"
-                    className="block text-gray-700 text-sm"
-                  >
-                    Profile Photo
-                  </label>
-                  <input
-                    type="file"
-                    id="profileImage"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="mt-2"
-                  />
-                  {profileImage && (
-                    <p className="text-sm text-gray-600 mt-2">
-                      Selected file: {profileImage.name}
-                    </p>
-                  )}
-                </div>
+          {/* Profile Photo */}
+          <div>
+            <label htmlFor="profileImage" className="block text-gray-700 text-sm">
+              Profile Photo
+            </label>
+            <input
+              type="file"
+              id="profileImage"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="mt-2"
+            />
+            {profileImage && (
+              <p className="text-sm text-gray-600 mt-2">
+                Selected file: {profileImage.name}
+              </p>
+            )}
+          </div>
 
-                {/* Name */}
-                <div>
-                  <label htmlFor="name" className="block text-gray-700 text-sm">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your full name"
-                  />
-                </div>
+          {/* Name */}
+          <div>
+            <label htmlFor="name" className="block text-gray-700 text-sm">
+              Full Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your full name"
+            />
+          </div>
 
-                {/* Email */}
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-gray-700 text-sm"
-                  >
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    disabled
-                  />
-                </div>
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="block text-gray-700 text-sm">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              disabled
+            />
+          </div>
 
-                {/* Phone */}
-                <div>
-                  <label
-                    htmlFor="phone"
-                    className="block text-gray-700 text-sm"
-                  >
-                    Phone Number
-                  </label>
-                  <input
-                    type="text"
-                    id="phone"
-                    className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Enter your phone number"
-                  />
-                </div>
+          {/* Phone */}
+          <div>
+            <label htmlFor="phone" className="block text-gray-700 text-sm">
+              Phone Number
+            </label>
+            <input
+              type="text"
+              id="phone"
+              className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Enter your phone number"
+            />
+          </div>
 
-                {/* Address */}
-                <div>
-                  <label
-                    htmlFor="address"
-                    className="block text-gray-700 text-sm"
-                  >
-                    Address
-                  </label>
-                  <input
-                    type="text"
-                    id="address"
-                    className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Enter your address"
-                  />
-                </div>
+          {/* Address */}
+          <div>
+            <label htmlFor="address" className="block text-gray-700 text-sm">
+              Address
+            </label>
+            <input
+              type="text"
+              id="address"
+              className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Enter your address"
+            />
+          </div>
 
-                {/* Save Button */}
-                <div className="mt-4 flex justify-center">
-                  <button
-                    type="submit"
-                    className="bg-indigo-600 text-white py-2 px-6 rounded-lg transition duration-300 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
+          {/* Save Button */}
+          <div className="mt-4 flex justify-center">
+            <button
+              type="submit"
+              className="bg-indigo-600 text-white py-2 px-6 rounded-lg transition duration-300 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
             </div>
           )}
 
@@ -473,71 +570,85 @@ function ProfileDashboard({ setIsAuthenticated }) {
               <h3 className="text-xl font-semibold text-gray-700 mb-4">
                 Change Password
               </h3>
-              <form onSubmit={handlePasswordChange} className="space-y-4">
-                {/* Current Password */}
-                <div>
-                  <label
-                    htmlFor="currentPassword"
-                    className="block text-gray-700 text-sm"
-                  >
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    id="currentPassword"
-                    className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter current password"
-                  />
-                </div>
+              {error && <p className="text-red-500">{error}</p>}
+      {success && <p className="text-green-500">{success}</p>}
+      <form className="space-y-4" onSubmit={handleSubmit}>
+        {/* Current Password */}
+       {/* Current Password */}
+      <div className="relative">
+        <label htmlFor="currentPassword" className="block text-gray-700 text-sm">
+          Current Password
+        </label>
+        <input
+          type={showCurrentPassword ? "text" : "password"}
+          id="currentPassword"
+          className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          placeholder="Enter current password"
+        />
+        <button
+          type="button"
+          className="absolute right-3 top-14 transform -translate-y-1/2 text-gray-500"
+          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+        >
+          {showCurrentPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+        </button>
+      </div>
 
-                {/* New Password */}
-                <div>
-                  <label
-                    htmlFor="newPassword"
-                    className="block text-gray-700 text-sm"
-                  >
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    id="newPassword"
-                    className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new password"
-                  />
-                </div>
+      {/* New Password */}
+      <div className="relative">
+        <label htmlFor="newPassword" className="block text-gray-700 text-sm">
+          New Password
+        </label>
+        <input
+          type={showNewPassword ? "text" : "password"}
+          id="newPassword"
+          className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          placeholder="Enter new password"
+        />
+        <button
+          type="button"
+          className="absolute right-3 top-14 transform -translate-y-1/2 text-gray-500"
+          onClick={() => setShowNewPassword(!showNewPassword)}
+        >
+          {showNewPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+        </button>
+      </div>
 
-                {/* Confirm Password */}
-                <div>
-                  <label
-                    htmlFor="confirmPassword"
-                    className="block text-gray-700 text-sm"
-                  >
-                    Confirm Password
-                  </label>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password"
-                  />
-                </div>
-
-                {/* Save Button */}
-                <div className="mt-4 flex justify-center">
-                  <button
-                    type="submit"
-                    className="bg-indigo-600 text-white py-2 px-6 rounded-lg transition duration-300 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    Update Password
-                  </button>
-                </div>
-              </form>
+      {/* Confirm Password */}
+      <div className="relative">
+        <label htmlFor="confirmPassword" className="block text-gray-700 text-sm">
+          Confirm Password
+        </label>
+        <input
+          type={showConfirmPassword ? "text" : "password"}
+          id="confirmPassword"
+          className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder="Confirm new password"
+        />
+        <button
+          type="button"
+          className="absolute right-3 top-14 transform -translate-y-1/2 text-gray-500"
+          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+        >
+          {showConfirmPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+        </button>
+      </div>
+        {/* Update Password Button */}
+        <div className="mt-4 flex justify-center">
+          <button
+            type="submit"
+            className="bg-indigo-600 text-white py-2 px-6 rounded-lg transition duration-300 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            Update Password
+          </button>
+        </div>
+      </form>
             </div>
           )}
 

@@ -1,18 +1,22 @@
-import React, { useState,useEffect  } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import { CSVLink } from "react-csv";
 import { FaEdit, FaTrashAlt, FaPlusCircle, FaFileExcel } from "react-icons/fa"; // Icons for actions
-import { collection, addDoc,getDocs,doc,getDoc,updateDoc,deleteDoc,setDoc} from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+} from "firebase/firestore";
 import { db } from "../components/firebase";
 import * as XLSX from "xlsx"; // Library to export Excel file
 import { getAuth } from "firebase/auth"; // Import Firebase Auth
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
 function Customers() {
-  const [customers, setCustomers] = useState([
-    // Additional customers
-  ]);
-
+  const [customers, setCustomers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState(""); // Filter by Active or Inactive
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,18 +28,16 @@ function Customers() {
   const [message, setMessage] = useState(""); // For showing messages like success/failure
 
   const filteredCustomers = customers.filter((customer) => {
-    // Fallbacks for missing or undefined properties
     const name = customer?.name || "";
     const email = customer?.email || "";
     const phone = customer?.phone || "";
-    const searchValue = searchQuery?.toLowerCase() || ""; // Assuming searchQuery is your term for searching
-  
-    // Filtering logic
+    const searchValue = searchQuery?.toLowerCase() || "";
+
     return (
-      (name.toLowerCase().includes(searchValue) || 
-       email.toLowerCase().includes(searchValue) || 
-       phone.includes(searchQuery)) && // Phone number is assumed to be numeric and doesn't need `.toLowerCase()`
-      (statusFilter ? customer.status === statusFilter : true) // Apply statusFilter if it's provided
+      (name.toLowerCase().includes(searchValue) ||
+        email.toLowerCase().includes(searchValue) ||
+        phone.includes(searchQuery)) &&
+      (statusFilter ? customer.status === statusFilter : true)
     );
   });
 
@@ -61,7 +63,7 @@ function Customers() {
     setCurrentCustomer({
       id: null,
       firstName: "",
-      lastName:"",
+      lastName: "",
       phone: "",
       address: "",
       orders: 0,
@@ -69,21 +71,44 @@ function Customers() {
     });
   };
 
-  const handleSave = () => {
-    if (isAdding) {
-      setCustomers([...customers, currentCustomer]);
-      setMessage("Customer added successfully!");
-    } else {
-      setCustomers(
-        customers.map((customer) =>
-          customer.id === currentCustomer.id ? currentCustomer : customer
-        )
-      );
-      setMessage("Customer details updated successfully!");
+  const handleSave = async () => {
+    try {
+      if (isAdding) {
+        setCustomers([...customers, currentCustomer]);
+        setMessage("Customer added successfully!");
+
+        const docRef = doc(
+          db,
+          "admin",
+          "nithya123@gmail.com",
+          "users",
+          currentCustomer.id
+        );
+        await setDoc(docRef, currentCustomer); // Save customer to Firestore
+      } else {
+        setCustomers(
+          customers.map((customer) =>
+            customer.id === currentCustomer.id ? currentCustomer : customer
+          )
+        );
+        setMessage("Customer details updated successfully!");
+
+        const docRef = doc(
+          db,
+          "admin",
+          "nithya123@gmail.com",
+          "users",
+          currentCustomer.id
+        );
+        await updateDoc(docRef, currentCustomer); // Update customer in Firestore
+      }
+      setIsEditing(false);
+      setIsAdding(false);
+      setCurrentCustomer(null);
+    } catch (error) {
+      console.error("Error saving customer:", error);
+      setMessage("Failed to save customer. Please try again.");
     }
-    setIsEditing(false);
-    setIsAdding(false);
-    setCurrentCustomer(null);
   };
 
   const handleInputChange = (e) => {
@@ -119,12 +144,12 @@ function Customers() {
     XLSX.writeFile(wb, "customers_data.xlsx");
   };
 
-  const [searchTerm, setSearchTerm] = useState("");
-  
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "admin", "nithya123@gmail.com", "users"));
+        const querySnapshot = await getDocs(
+          collection(db, "admin", "nithya123@gmail.com", "users")
+        );
         const customersData = [];
         querySnapshot.forEach((doc) => {
           customersData.push({ id: doc.id, ...doc.data() });
@@ -134,23 +159,26 @@ function Customers() {
         console.error("Error fetching customers:", error);
       }
     };
-  
+
     fetchCustomers();
   }, []);
-  
+
   const handleSubmitCustomer = async () => {
     try {
-      // Add customer to Firestore with the updated path
       const newCustomer = { ...currentCustomer, id: Date.now().toString() }; // Add an ID for local rendering
-      const docRef = doc(db, "admin", "nithya123@gmail.com", "users", newCustomer.id); // Modify path here
+      const docRef = doc(
+        db,
+        "admin",
+        "nithya123@gmail.com",
+        "users",
+        newCustomer.id
+      ); // Modify path here
       await setDoc(docRef, newCustomer); // Save customer at the new path
-  
-      // Update local state
+
       setCustomers([...customers, newCustomer]);
-  
-      // Close the modal
+
       setIsAdding(false);
-  
+
       Swal.fire({
         icon: "success",
         title: "Customer Added",
@@ -165,11 +193,10 @@ function Customers() {
       });
     }
   };
-  
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-blue-800 text-center">
+      <h1 className="text-2xl font-bold text-blue-800 text-center">
         Customers Details
       </h1>
 
@@ -188,19 +215,19 @@ function Customers() {
       <div className="flex justify-center space-x-4 mb-4">
         <button
           onClick={() => setStatusFilter("")}
-          className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300"
+          className="bg-blue-600 text-white py-2 px-2 rounded-lg hover:bg-blue-700 transition duration-300"
         >
           All
         </button>
         <button
           onClick={() => setStatusFilter("Active")}
-          className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-300"
+          className="bg-green-600 text-white py-2 px-2 rounded-lg hover:bg-green-700 transition duration-300"
         >
           Active
         </button>
         <button
           onClick={() => setStatusFilter("Inactive")}
-          className="bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-300"
+          className="bg-gray-600 text-white py-2 px-2 rounded-lg hover:bg-gray-700 transition duration-300"
         >
           Inactive
         </button>
@@ -215,29 +242,26 @@ function Customers() {
 
       {/* Export Data Buttons */}
       <div className="flex justify-between mb-4">
-        {/* Export Data as CSV */}
         <CSVLink
           data={customers}
           filename="customers_data.csv"
-          className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300"
+          className="bg-blue-600 text-white py-1 px-2 rounded-lg hover:bg-blue-700 transition duration-300"
         >
           <FaFileExcel className="inline mr-2" />
-          Export as Excel
+          Export as CSV
         </CSVLink>
 
-        {/* Export Data as Excel */}
-        {/* <button
+        <button
           onClick={handleExportExcel}
-          className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300"
+          className="bg-blue-600 text-white py-1 px-2 rounded-lg hover:bg-blue-700 transition duration-300"
         >
           <FaFileExcel className="inline mr-2" />
           Export as Excel
-        </button> */}
+        </button>
 
-        {/* Add Customer Button */}
         <button
           onClick={handleAdd}
-          className="bg-green-600 text-white py-2 px-6 rounded-lg hover:bg-green-700 transition duration-300"
+          className="bg-green-600 text-white py-1 px-2 rounded-lg hover:bg-green-700 transition duration-300"
         >
           <FaPlusCircle className="inline mr-2" />
           Add Customer
@@ -333,93 +357,119 @@ function Customers() {
         ))}
       </div>
 
-      {isAdding && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-      <h2 className="text-2xl font-semibold mb-4 text-blue-600 ">Add New Customer</h2>
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          await handleSubmitCustomer();
-        }}
-      >
-        <div className="mb-4">
-          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-          FirstName
-          </label>
-          <input
-            type="text"
-            id="firstName"
-            value={currentCustomer.firstName}
-            onChange={(e) => setCurrentCustomer({ ...currentCustomer, firstName: e.target.value })}
-            className="border rounded-md w-full p-2"
-          />
+      {/* Edit/Add Customer Modal */}
+      {(isAdding || isEditing) && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-2xl font-semibold mb-4 text-blue-600">
+              {isAdding ? "Add New Customer" : "Edit Customer"}
+            </h2>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSave();
+              }}
+            >
+              <div className="mb-4">
+                <label
+                  htmlFor="firstName"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  value={currentCustomer.firstName}
+                  onChange={handleInputChange}
+                  name="firstName"
+                  className="border rounded-md w-full p-2"
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="lastName"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  value={currentCustomer.lastName}
+                  onChange={handleInputChange}
+                  name="lastName"
+                  className="border rounded-md w-full p-2"
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  value={currentCustomer.email}
+                  onChange={handleInputChange}
+                  name="email"
+                  className="border rounded-md w-full p-2"
+                  disabled={isEditing}
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Phone Number
+                </label>
+                <input
+                  type="text"
+                  id="phone"
+                  value={currentCustomer.phone}
+                  onChange={handleInputChange}
+                  name="phone"
+                  className="border rounded-md w-full p-2"
+                />
+              </div>
+              <div className="mb-4">
+                <label
+                  htmlFor="address"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Address
+                </label>
+                <input
+                  type="text"
+                  id="address"
+                  value={currentCustomer.address}
+                  onChange={handleInputChange}
+                  name="address"
+                  className="border rounded-md w-full p-2"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="submit"
+                  className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="bg-gray-300 text-black py-2 px-4 rounded-md hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-        <div className="mb-4">
-          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-          LastName
-          </label>
-          <input
-            type="text"
-            id="lastName"
-            value={currentCustomer.lastName}
-            onChange={(e) => setCurrentCustomer({ ...currentCustomer, lastName: e.target.value })}
-            className="border rounded-md w-full p-2"
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={currentCustomer.email}
-            onChange={(e) => setCurrentCustomer({ ...currentCustomer, email: e.target.value })}
-            className="border rounded-md w-full p-2"
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-            Phone Number
-          </label>
-          <input
-            type="text"
-            id="phone"
-            value={currentCustomer.phone}
-            onChange={(e) => setCurrentCustomer({ ...currentCustomer, phone: e.target.value })}
-            className="border rounded-md w-full p-2"
-          />
-        </div>
-        <div className="mb-4">
-          <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-            Address
-          </label>
-          <input
-            type="text"
-            id="address"
-            value={currentCustomer.address}
-            onChange={(e) => setCurrentCustomer({ ...currentCustomer, address: e.target.value })}
-            className="border rounded-md w-full p-2"
-          />
-        </div>
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-        >
-          Submit
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsAdding(false)}
-          className="bg-gray-300 text-black px-4 py-2 ml-2 rounded-md hover:bg-gray-400"
-        >
-          Cancel
-        </button>
-      </form>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 }

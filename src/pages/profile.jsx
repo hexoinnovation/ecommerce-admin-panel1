@@ -4,11 +4,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../components/firebase"; // Import Firebase auth methods
 import { db } from "../components/firebase"; // Firebase config
-import { getAuth } from "firebase/auth";
+import { getAuth,onAuthStateChanged  } from "firebase/auth";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 
 function ProfileDashboard({ setIsAuthenticated }) {
+  const auth = getAuth();
+  const [currentUser, setCurrentUser] = useState(null);
   const [users, setUser] = useState(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -45,10 +47,10 @@ function ProfileDashboard({ setIsAuthenticated }) {
         const userDoc = await getDoc(userRef);
         if (userDoc.exists()) {
           setUser(userDoc.data());
-          setName(userDoc.data().name);
-          setEmail(userDoc.data().email);
-          setPhone(userDoc.data().phone || "");
-          setAddress(userDoc.data().address || "");
+          // setName(userDoc.data().name);
+          // setEmail(userDoc.data().email);
+          // setPhone(userDoc.data().phone || "");
+          // setAddress(userDoc.data().address || "");
           setBusinessName(userDoc.data().businessName || "");
           setWebsite(userDoc.data().website || "");
           setSocialLinks(
@@ -74,49 +76,7 @@ function ProfileDashboard({ setIsAuthenticated }) {
   }, [navigate]);
 
  
-  
-  // Function to handle password change
-  const handlePasswordChange = async (e) => {
-    e.preventDefault();
 
-    if (newPassword !== confirmPassword) {
-      setError("New passwords do not match.");
-      return;
-    }
-
-    // Here, we assume you check the current password before updating
-    // For now, we're just simulating this validation.
-    if (currentPassword !== user?.password) {
-      setError("Current password is incorrect.");
-      return;
-    }
-
-    try {
-      const userRef = doc(db, "admin", email);
-      await setDoc(
-        userRef,
-        {
-          password: newPassword, // Update the password in Firestore
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
-
-      setError("");
-      setSuccess("Password updated successfully!");
-    } catch (err) {
-      setError("Error updating password.");
-      console.error(err);
-    }
-  };
-
-  // Handle file upload for profile picture
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfileImage(file);
-    }
-  };
 
   // Handle changes to security settings
   const handleSecuritySettingsChange = (e) => {
@@ -128,45 +88,95 @@ function ProfileDashboard({ setIsAuthenticated }) {
   };
 
 
+  
+  // Listen for auth state changes
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user) setEmail(user.email);
+    });
+    return () => unsubscribe();
+  }, []);
 
+  // Fetch profile data when profile tab is selected and currentUser exists
+  useEffect(() => {
+    if (selectedTab === "profile" && currentUser) {
+      fetchProfileData();
+    }
+  }, [selectedTab, currentUser]);
+
+  const fetchProfileData = async () => {
+    if (!currentUser || !phone) {
+      console.log("No current user or phone number");
+      return;
+    }
+
+    const userEmail = currentUser.email;
+    const profileDocRef = doc(db, "admin", userEmail, "ProfileinfoData", phone);
+
+    try {
+      const docSnap = await getDoc(profileDocRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setName(data.name || "");
+        setPhone(data.phone || "");
+        setAddress(data.address || "");
+        setProfileImage(data.profileImage || null);
+        setEmail(currentUser.email);  // Set the email from the current user
+      } else {
+        console.log("No profile data found at this path");
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-  
+
     const auth = getAuth();
     const currentUser = auth.currentUser;
-  
+
     if (!currentUser || !currentUser.email) {
       alert("No user is signed in. Please sign in to update the profile.");
       return;
     }
-  
+
     if (!phone) {
       alert("Please enter a phone number to store the profile.");
       return;
     }
-  
-    const userEmail = currentUser.email; // Authenticated user email
-  
+
+    const userEmail = currentUser.email;
+
     try {
-      // ✅ Firestore document reference in "admin/{userEmail}/ProfileinfoData/{phone}"
+      // Firestore document reference in "admin/{userEmail}/ProfileinfoData/{phone}"
       const profileDocRef = doc(db, "admin", userEmail, "ProfileinfoData", phone);
-  
+
       const profileData = {
         name,
-        email: userEmail, // Use authenticated email
+        email: userEmail, 
         phone,
         address,
-        profileImage: profileImage ? profileImage.name : "", // Store file name
+        profileImage: profileImage ? profileImage.name : "", // Storing file name if image exists
       };
-  
-      // ✅ Use `setDoc` with `{ merge: true }` to avoid overwriting existing data
+
+      // Use `setDoc` with `{ merge: true }` to avoid overwriting existing data
       await setDoc(profileDocRef, profileData, { merge: true });
-  
+
       alert("Profile updated successfully!");
     } catch (error) {
-      console.error("Error updating profile: ", error);
+      console.error("Error updating profile:", error);
       alert("Failed to update profile. Please try again.");
+    }
+  };
+
+  // Handle image change
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImage(file);
     }
   };
 
@@ -214,7 +224,6 @@ function ProfileDashboard({ setIsAuthenticated }) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const auth = getAuth();
   const user = auth.currentUser;
 
   useEffect(() => {
@@ -294,14 +303,14 @@ function ProfileDashboard({ setIsAuthenticated }) {
         <h2 className="text-2xl font-semibold mb-8">Admin Dashboard</h2>
         <ul className="space-y-4">
           <li>
-            <button
-              className={`w-full text-left py-2 px-4 rounded-lg ${
-                selectedTab === "profile" ? "bg-indigo-600" : "bg-indigo-500"
-              } hover:bg-indigo-600 focus:outline-none`}
-              onClick={() => setSelectedTab("profile")}
-            >
-              Profile Settings
-            </button>
+          <button
+        className={`w-full text-left py-2 px-4 rounded-lg ${
+          selectedTab === "profile" ? "bg-indigo-600" : "bg-indigo-500"
+        } hover:bg-indigo-600 focus:outline-none`}
+        onClick={() => setSelectedTab("profile")}
+      >
+        Profile Settings
+      </button>
           </li>
           <li>
             <button
@@ -349,114 +358,102 @@ function ProfileDashboard({ setIsAuthenticated }) {
           )}
 
           {/* Profile Settings Tab */}
-          {selectedTab === "profile" && (
+          {selectedTab === "profile" && currentUser && (
             <div className="bg-white p-6 rounded-lg shadow-lg mb-8">
               <h3 className="text-xl font-semibold text-gray-700 mb-4">
                 Personal Information
               </h3>
               <form onSubmit={handleUpdateProfile} className="space-y-4">
-                {/* Profile Photo */}
-                <div>
-                  <label
-                    htmlFor="profileImage"
-                    className="block text-gray-700 text-sm"
-                  >
-                    Profile Photo
-                  </label>
-                  <input
-                    type="file"
-                    id="profileImage"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="mt-2"
-                  />
-                  {profileImage && (
-                    <p className="text-sm text-gray-600 mt-2">
-                      Selected file: {profileImage.name}
-                    </p>
-                  )}
-                </div>
+          {/* Profile Photo */}
+          <div>
+            <label htmlFor="profileImage" className="block text-gray-700 text-sm">
+              Profile Photo
+            </label>
+            <input
+              type="file"
+              id="profileImage"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="mt-2"
+            />
+            {profileImage && (
+              <p className="text-sm text-gray-600 mt-2">
+                Selected file: {profileImage.name}
+              </p>
+            )}
+          </div>
 
-                {/* Name */}
-                <div>
-                  <label htmlFor="name" className="block text-gray-700 text-sm">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your full name"
-                  />
-                </div>
+          {/* Name */}
+          <div>
+            <label htmlFor="name" className="block text-gray-700 text-sm">
+              Full Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your full name"
+            />
+          </div>
 
-                {/* Email */}
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-gray-700 text-sm"
-                  >
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    disabled
-                  />
-                </div>
+          {/* Email */}
+          <div>
+            <label htmlFor="email" className="block text-gray-700 text-sm">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              disabled
+            />
+          </div>
 
-                {/* Phone */}
-                <div>
-                  <label
-                    htmlFor="phone"
-                    className="block text-gray-700 text-sm"
-                  >
-                    Phone Number
-                  </label>
-                  <input
-                    type="text"
-                    id="phone"
-                    className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Enter your phone number"
-                  />
-                </div>
+          {/* Phone */}
+          <div>
+            <label htmlFor="phone" className="block text-gray-700 text-sm">
+              Phone Number
+            </label>
+            <input
+              type="text"
+              id="phone"
+              className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Enter your phone number"
+            />
+          </div>
 
-                {/* Address */}
-                <div>
-                  <label
-                    htmlFor="address"
-                    className="block text-gray-700 text-sm"
-                  >
-                    Address
-                  </label>
-                  <input
-                    type="text"
-                    id="address"
-                    className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Enter your address"
-                  />
-                </div>
+          {/* Address */}
+          <div>
+            <label htmlFor="address" className="block text-gray-700 text-sm">
+              Address
+            </label>
+            <input
+              type="text"
+              id="address"
+              className="w-full p-3 mt-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Enter your address"
+            />
+          </div>
 
-                {/* Save Button */}
-                <div className="mt-4 flex justify-center">
-                  <button
-                    type="submit"
-                    className="bg-indigo-600 text-white py-2 px-6 rounded-lg transition duration-300 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
+          {/* Save Button */}
+          <div className="mt-4 flex justify-center">
+            <button
+              type="submit"
+              className="bg-indigo-600 text-white py-2 px-6 rounded-lg transition duration-300 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
             </div>
           )}
 

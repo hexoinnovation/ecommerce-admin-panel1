@@ -237,7 +237,7 @@ const PaymentMethods = () => {
         /> */}
         <button
           onClick={() => setShowForm(true)}
-          className="bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 focus:outline-none"
+          className="bg-red-500 text-white px-6 py-3 rounded-md hover:bg-green-600 focus:outline-none"
         >
           Add Payment Method
         </button>

@@ -85,19 +85,11 @@ const ReportsPage = () => {
           {filteredSalesData.map((data, index) => (
             <tr
               key={index}
-              className={`hover:bg-gray-50 ${
-                index % 2 === 0 ? "bg-gray-100" : ""
-              }`}
+              className={`hover:bg-gray-50 ${index % 2 === 0 ? "bg-gray-100" : ""}`}
             >
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">
-                {data.date}
-              </td>
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">
-                {data.sales}
-              </td>
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">
-                {data.orders}
-              </td>
+              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.date}</td>
+              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.sales}</td>
+              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.orders}</td>
             </tr>
           ))}
         </tbody>
@@ -125,19 +117,11 @@ const ReportsPage = () => {
           {customerData.map((data, index) => (
             <tr
               key={index}
-              className={`hover:bg-gray-50 ${
-                index % 2 === 0 ? "bg-gray-100" : ""
-              }`}
+              className={`hover:bg-gray-50 ${index % 2 === 0 ? "bg-gray-100" : ""}`}
             >
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">
-                {data.customerName}
-              </td>
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">
-                {data.orders}
-              </td>
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">
-                {data.totalSpent}
-              </td>
+              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.customerName}</td>
+              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.orders}</td>
+              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.totalSpent}</td>
             </tr>
           ))}
         </tbody>
@@ -165,19 +149,11 @@ const ReportsPage = () => {
           {productData.map((data, index) => (
             <tr
               key={index}
-              className={`hover:bg-gray-50 ${
-                index % 2 === 0 ? "bg-gray-100" : ""
-              }`}
+              className={`hover:bg-gray-50 ${index % 2 === 0 ? "bg-gray-100" : ""}`}
             >
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">
-                {data.productName}
-              </td>
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">
-                {data.sold}
-              </td>
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">
-                {data.revenue}
-              </td>
+              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.productName}</td>
+              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.sold}</td>
+              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.revenue}</td>
             </tr>
           ))}
         </tbody>
@@ -190,10 +166,10 @@ const ReportsPage = () => {
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Reports</h1>
 
       {/* Report Filters (e.g., Date Range, Report Type) */}
-      <div className="mb-6">
-        <div className="flex items-center space-x-4">
+      <div className="mb-6 space-y-4 md:space-y-0 md:flex md:items-center md:gap-4">
+        <div className="flex flex-col sm:flex-row sm:space-x-4">
           <select
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto"
             onChange={(e) => setSelectedReport(e.target.value)}
             value={selectedReport}
           >
@@ -224,7 +200,7 @@ const ReportsPage = () => {
           <input
             type="text"
             placeholder="Search by Date"
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:w-auto"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />

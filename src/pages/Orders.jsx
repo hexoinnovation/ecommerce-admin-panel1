@@ -11,63 +11,7 @@ import {
 } from "firebase/firestore";
 function Orders(order ) {
   const [orders, setOrders] = useState([
-    {
-      id: 1,
-      customer: "John Doe",
-      total: 100,
-      status: "Pending",
-      paid: false,
-      items: [
-        { name: "Product 1", price: 50, quantity: 1 },
-        { name: "Product 2", price: 50, quantity: 1 },
-      ],
-    },
-    {
-      id: 2,
-      customer: "Jane Smith",
-      total: 200,
-      status: "Shipped",
-      paid: true,
-      items: [{ name: "Product 3", price: 100, quantity: 2 }],
-    },
-    {
-      id: 3,
-      customer: "Mark Lee",
-      total: 150,
-      status: "Pending",
-      paid: false,
-      items: [{ name: "Product 4", price: 75, quantity: 2 }],
-    },
-    {
-      id: 4,
-      customer: "Alice Brown",
-      total: 300,
-      status: "Delivered",
-      paid: true,
-      items: [
-        { name: "Product 5", price: 100, quantity: 2 },
-        { name: "Product 6", price: 100, quantity: 1 },
-      ],
-    },
-    {
-      id: 5,
-      customer: "Bob Martin",
-      total: 250,
-      status: "Shipped",
-      paid: false,
-      items: [
-        { name: "Product 7", price: 50, quantity: 3 },
-        { name: "Product 8", price: 50, quantity: 2 },
-      ],
-    },
-    {
-      id: 6,
-      customer: "Emily White",
-      total: 120,
-      status: "Pending",
-      paid: false,
-      items: [{ name: "Product 9", price: 40, quantity: 3 }],
-    },
+
   ]);
   const [selectedOrders, setSelectedOrders] = useState([]);
   const [filteredStatus, setFilteredStatus] = useState("");

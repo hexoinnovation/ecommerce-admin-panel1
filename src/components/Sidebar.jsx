@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router-dom"; // Use Link for navigation
 import { IoClose } from "react-icons/io5"; // Import Close icon from react-icons
 import { FaCog } from "react-icons/fa"; // Import settings icon for "Choose Layout"
 
@@ -51,7 +51,7 @@ const Sidebar = ({
 
         {/* Sidebar Title */}
         <h2
-          className={`text-2xl font-semibold  text-white transition-all duration-300 ${
+          className={`text-1xl font-semibold  text-white transition-all duration-300 ${
             isSidebarOpen ? "block" : "hidden"
           }`}
         >
@@ -117,22 +117,50 @@ const Sidebar = ({
             </Link>
           </li>
 
-          {/* Profile Settings moved under Vendors */}
+          {/* New sections for Shipping and Payment Methods moved up */}
           <li>
             <Link
-              to="/profile"
+              to="/shipping"
               className="text-white hover:bg-indigo-600 p-3 text-1xl rounded-lg transition duration-200 ease-in-out"
+            >
+              Shipping Methods
+            </Link>
+          </li>
+          <li>
+            <Link
+              to="/payments"
+              className="text-white hover:bg-indigo-600 p-3 text-1xl rounded-lg transition duration-200 ease-in-out"
+            >
+              Payment Methods
+            </Link>
+          </li>
+
+          {/* Reports section remains unchanged */}
+          <li>
+            <Link
+              to="/reports"
+              className="text-white hover:bg-indigo-600 p-3 text-1xl rounded-lg transition duration-200 ease-in-out"
+            >
+              Reports
+            </Link>
+          </li>
+
+          {/* Profile Settings now as button using Link */}
+          <li>
+            <Link
+              to="/profile" // Link to Profile page
+              className="mt-4 bg-red-600 text-white font-bold text-1xl py-3 px-11 rounded w-600px hover:bg-red-700"
             >
               Profile Settings
             </Link>
           </li>
         </ul>
 
-        {/* Logout Button */}
+        {/* Logout Button with same width and height */}
         <div className="mt-4">
           <button
             onClick={handleLogout}
-            className="mt-4 bg-red-600 text-white font-bold  text-1xl py-2 px-4 rounded w-full hover:bg-red-700"
+            className="mt-4 bg-red-600 text-white font-bold text-1xl py-3 px-4 rounded w-full hover:bg-red-700"
           >
             Logout
           </button>

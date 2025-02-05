@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../components/firebase"; // Import Firebase auth methods
 import { db } from "../components/firebase"; // Firebase config
+import { getAuth } from "firebase/auth";
 
 function ProfileDashboard({ setIsAuthenticated }) {
   const [user, setUser] = useState(null);
@@ -98,7 +99,7 @@ function ProfileDashboard({ setIsAuthenticated }) {
   };
 
   // Function to handle updating the profile (name, phone, address)
-  const handleUpdateProfile = async (e) => {
+  const handleUpdateProfiles = async (e) => {
     e.preventDefault();
     try {
       let imageUrl = user?.profileImage || ""; // Default to existing image if not updated
@@ -187,6 +188,49 @@ function ProfileDashboard({ setIsAuthenticated }) {
     }));
   };
 
+
+
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+  
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+  
+    if (!currentUser || !currentUser.email) {
+      alert("No user is signed in. Please sign in to update the profile.");
+      return;
+    }
+  
+    if (!phone) {
+      alert("Please enter a phone number to store the profile.");
+      return;
+    }
+  
+    const userEmail = currentUser.email; // Authenticated user email
+  
+    try {
+      // ✅ Firestore document reference in "admin/{userEmail}/ProfileinfoData/{phone}"
+      const profileDocRef = doc(db, "admin", userEmail, "ProfileinfoData", phone);
+  
+      const profileData = {
+        name,
+        email: userEmail, // Use authenticated email
+        phone,
+        address,
+        profileImage: profileImage ? profileImage.name : "", // Store file name
+      };
+  
+      // ✅ Use `setDoc` with `{ merge: true }` to avoid overwriting existing data
+      await setDoc(profileDocRef, profileData, { merge: true });
+  
+      alert("Profile updated successfully!");
+    } catch (error) {
+      console.error("Error updating profile: ", error);
+      alert("Failed to update profile. Please try again.");
+    }
+  };
+  
   return (
     <div className="min-h-500px bg-blue-200 flex">
       {/* Sidebar */}

@@ -154,6 +154,53 @@ function Dashboard() {
     navigate('/reports'); // Redirect to /reports page
   };
 
+
+  const [orders, setOrders] = useState([]);
+  const [totalOrdersCount, setTotalOrdersCount] = useState(0); // New state to hold the total orders count
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const usersCollection = await getDocs(
+          collection(db, "admin", "nithya123@gmail.com", "users")
+        );
+
+        const ordersData = [];
+        let totalCount = 0; // Initialize the total count of orders
+
+        for (const userDoc of usersCollection.docs) {
+          const userEmail = userDoc.id;
+
+          const ordersSnapshot = await getDocs(
+            collection(db, "admin", "nithya123@gmail.com", "users", userEmail, "order")
+          );
+
+          ordersSnapshot.forEach((doc) => {
+            const orderData = doc.data();
+
+            ordersData.push({
+              id: doc.id,
+              userEmail,
+              orderType: orderData.orderType || "defaultType",
+              ...orderData,
+            });
+
+            totalCount++; // Increment the count for each order found
+          });
+        }
+
+        setOrders(ordersData);
+        setTotalOrdersCount(totalCount); // Update the total orders count
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -177,10 +224,10 @@ function Dashboard() {
       <h3 className="text-xl font-semibold text-white">Total Products</h3>
       <p className="text-3xl font-bold text-white">{productCount}</p> {/* Display product count */}
     </div>
-        <div className="bg-gradient-to-r from-purple-400 to-purple-600 p-6 rounded-lg shadow-lg">
-          <h3 className="text-xl font-semibold text-white">Total Orders</h3>
-          <p className="text-3xl font-bold text-white">320</p>
-        </div>
+    <div className="bg-gradient-to-r from-purple-400 to-purple-600 p-6 rounded-lg shadow-lg">
+      <h3 className="text-xl font-semibold text-white">Total Orders</h3>
+      <p className="text-3xl font-bold text-white">{totalOrdersCount}</p>
+    </div>
       </div>
 
       {/* Additional Stats */}

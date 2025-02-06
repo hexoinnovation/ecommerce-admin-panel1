@@ -3,6 +3,8 @@ import {collection,getDocs,} from "firebase/firestore";
 import { db } from "../components/firebase";
 import { getAuth } from "firebase/auth"; // Import Firebase Auth
 // Helper function to simulate export functionality
+import { FileText   } from "lucide-react"; // Bar chart icon for reports
+import { motion } from "framer-motion";
 const exportToCSV = (data, filename = "report.csv") => {
   const csvContent = [
     ["Date", "Sales (₹)", "Orders"], // Header for sales report
@@ -305,9 +307,16 @@ const filteredProducts = products.filter(
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex flex-col justify-center items-center p-6">
-      <h1 className="text-4xl font-bold text-blue-700 mb-1  ">Reports</h1>
-</div>
+    <div className="flex flex-col justify-center items-center p-6">
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+      >
+        <FileText   size={48} className="text-blue-700" />
+      </motion.div>
+      <h1 className="text-4xl font-bold text-blue-700 mt-2">Reports</h1>
+    </div>
       {/* Report Filters (e.g., Date Range, Report Type) */}
       <div className="mb-6 space-y-4 md:space-y-0 md:flex md:items-center md:gap-4">
         <div className="flex flex-col sm:flex-row sm:space-x-4">

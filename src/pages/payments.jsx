@@ -8,7 +8,8 @@ import {
   deleteDoc,
   updateDoc,
 } from "firebase/firestore";
-
+import { Wallet  } from "lucide-react"; // Icon for payment methods
+import { motion } from "framer-motion";
 const PaymentMethods = () => {
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -123,9 +124,16 @@ const PaymentMethods = () => {
   return (
     <div className="container mx-auto p-6">
      
-      <div className="flex flex-col justify-center items-center p-6">
-      <h1 className="text-4xl font-bold text-blue-700 mb-1  ">    Manage Payment Methods</h1>
-</div>
+     <div className="flex flex-col justify-center items-center p-6">
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+      >
+        <Wallet   size={48} className="text-blue-700" />
+      </motion.div>
+      <h1 className="text-4xl font-bold text-blue-700 mt-2">Manage Payment Methods</h1>
+    </div>
       {/* Search Bar */}
       <div className="flex flex-col justify-center items-center p-6">
         <input

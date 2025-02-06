@@ -9,6 +9,8 @@ import {
   deleteDoc,
   addDoc,
 } from "firebase/firestore";
+import { ShoppingCart } from "lucide-react";
+import { motion } from "framer-motion";
 function Orders(order ) {
   const [orders, setOrders] = useState([
 
@@ -175,8 +177,15 @@ const handleStatusChange = async (orderId, newStatus) => {
     <div className="space-y-6 p-4 ml-10 mb-4">
     {/* Header */}
     <div className="flex flex-col justify-center items-center p-6">
-      <h1 className="text-4xl font-bold text-blue-700 mb-1  ">Orders</h1>
-</div>
+      <motion.div
+        initial={{ scale: 0.8, rotate: 0, opacity: 0 }}
+        animate={{ scale: 1, rotate: 360, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+      >
+        <ShoppingCart size={48} className="text-blue-700" />
+      </motion.div>
+      <h1 className="text-4xl font-bold text-blue-700 mt-2">Orders</h1>
+    </div>
   
     {/* Filters and Actions */}
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-4">

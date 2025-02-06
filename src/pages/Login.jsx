@@ -1,4 +1,4 @@
-import { doc,setDoc} from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, signInWithEmailAndPassword } from "../components/firebase"; // Import Firebase auth methods
@@ -12,34 +12,33 @@ function Login({ setIsAuthenticated }) {
   const [rememberMe, setRememberMe] = useState(false); // To handle 'Remember Me' checkbox
   const navigate = useNavigate();
 
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     // Basic validation
     if (!email || !password) {
       setError("Both fields are required!");
       return;
     }
-  
+
     try {
       // Firebase authentication: Sign in user with email and password
       await signInWithEmailAndPassword(auth, email, password);
       setError(""); // Clear error message on success
-  
+
       // Optionally, handle 'Remember Me' logic by storing the user session
       if (rememberMe) {
         localStorage.setItem("userEmail", email); // Store email in local storage
       }
-  
+
       // Save user data to Firestore under the 'admin' collection
       const userRef = doc(db, `admin/${email}`);
       await setDoc(userRef, {
         email: email,
-        password : password,
+        password: password,
         createdAt: new Date().toISOString(),
       });
-  
+
       setIsAuthenticated(true); // Set user as authenticated
       navigate("/"); // Redirect to /admin after successful login
     } catch (err) {

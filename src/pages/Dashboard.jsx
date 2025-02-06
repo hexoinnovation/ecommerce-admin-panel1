@@ -199,6 +199,88 @@ function Dashboard() {
     fetchOrders();
   }, []);
 
+  const handleViewOrder = (orderId) => {
+    const order = orders.find(order => order.id === orderId);
+    setSelectedOrder(order);
+  };
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+
+  const [shippedOrdersCount, setShippedOrdersCount] = useState(0); // ✅ New state for "Shipped" orders count
+  
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const usersCollection = await getDocs(
+          collection(db, "admin", "nithya123@gmail.com", "users")
+        );
+  
+        const ordersData = [];
+        let totalCount = 0;
+        let shippedCount = 0; // ✅ Count for "Shipped" orders
+  
+        for (const userDoc of usersCollection.docs) {
+          const userEmail = userDoc.id;
+  
+          const ordersSnapshot = await getDocs(
+            collection(db, "admin", "nithya123@gmail.com", "users", userEmail, "order")
+          );
+  
+          ordersSnapshot.forEach((doc) => {
+            const orderData = doc.data();
+  
+            if (orderData.status === "Shipped") {
+              shippedCount++; // ✅ Increment count if status is "Shipped"
+            }
+  
+            ordersData.push({
+              id: doc.id,
+              userEmail,
+              orderType: orderData.orderType || "defaultType",
+              ...orderData,
+            });
+  
+            totalCount++;
+          });
+        }
+  
+        setOrders(ordersData);
+        setTotalOrdersCount(totalCount);
+        setShippedOrdersCount(shippedCount); // ✅ Update shipped orders count
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+    };
+  
+    fetchOrders();
+  }, []);
+
+  const [vendorCount, setVendorCount] = useState(0);
+
+  useEffect(() => {
+    const fetchVendorCount = async () => {
+      try {
+        const auth = getAuth();
+        const userEmail = auth.currentUser ? auth.currentUser.email : null;
+        if (!userEmail) {
+          console.error("No user is logged in");
+          return;
+        }
+  
+        // Reference to vendors collection
+        const vendorCollectionRef = collection(db, `admin/${userEmail}/vendors`);
+        const vendorSnapshot = await getDocs(vendorCollectionRef);
+  
+        // Update state with vendor count
+        setVendorCount(vendorSnapshot.size); // ✅ Get total document count
+  
+      } catch (error) {
+        console.error("Error fetching vendor count: ", error);
+      }
+    };
+  
+    fetchVendorCount();
+  }, []); // ✅ Runs once when the component mounts
 
 
   return (
@@ -217,8 +299,8 @@ function Dashboard() {
       {/* Stats Section (Widgets) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         <div className="bg-gradient-to-r from-green-400 to-green-600 p-6 rounded-lg shadow-lg">
-          <h3 className="text-xl font-semibold text-white">Total Sales</h3>
-          <p className="text-3xl font-bold text-white">₹24,500</p>
+          <h3 className="text-xl font-semibold text-white"> Total Customers</h3>
+          <p className="text-3xl font-bold text-white">{totalCustomers}</p>
         </div>
         <div className="bg-gradient-to-r from-blue-400 to-blue-600 p-6 rounded-lg shadow-lg">
       <h3 className="text-xl font-semibold text-white">Total Products</h3>
@@ -232,18 +314,18 @@ function Dashboard() {
 
       {/* Additional Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-        <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 p-6 rounded-lg shadow-lg">
-          <h3 className="text-xl font-semibold text-white">Total Revenue</h3>
-          <p className="text-3xl font-bold text-white">₹12,500</p>
-        </div>
+      <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 p-6 rounded-lg shadow-lg">
+  <h3 className="text-xl font-semibold text-white">Total Vendors</h3>
+  <p className="text-3xl font-bold text-white">{vendorCount}</p> 
+</div>
         <div className="bg-gradient-to-r from-teal-400 to-teal-600 p-6 rounded-lg shadow-lg">
   <h3 className="text-xl font-semibold text-white">Active Users</h3>
   <p className="text-3xl font-bold text-white">{totalCustomers}</p>
 </div>
-        <div className="bg-gradient-to-r from-red-400 to-red-600 p-6 rounded-lg shadow-lg">
-          <h3 className="text-xl font-semibold text-white">Pending Orders</h3>
-          <p className="text-3xl font-bold text-white">50</p>
-        </div>
+<div className="bg-gradient-to-r from-red-400 to-red-600 p-6 rounded-lg shadow-lg">
+  <h3 className="text-xl font-semibold text-white">Pending Orders</h3>
+  <p className="text-3xl font-bold text-white">{shippedOrdersCount}</p> {/* ✅ Dynamic count */}
+</div>
       </div>
 
       {/* Latest Orders Table */}
@@ -253,49 +335,66 @@ function Dashboard() {
           <thead className="bg-gray-100">
             <tr>
               <th className="py-3 px-4 text-left">Order ID</th>
-              <th className="py-3 px-4 text-left">Customer</th>
-              <th className="py-3 px-4 text-left">Total</th>
+              <th className="py-3 px-4 text-left">Order Date</th>
+              <th className="py-3 px-4 text-left">UserEmail</th>
               <th className="py-3 px-4 text-left">Status</th>
               <th className="py-3 px-4 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td className="py-2 px-4">#12345</td>
-              <td className="py-2 px-4">John Doe</td>
-              <td className="py-2 px-4">₹100</td>
-              <td className="py-2 px-4 text-green-600">Completed</td>
-              <td className="py-2 px-4">
-                <button className="text-blue-500 hover:text-blue-700">
-                  View
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td className="py-2 px-4">#12346</td>
-              <td className="py-2 px-4">Jane Smith</td>
-              <td className="py-2 px-4">₹200</td>
-              <td className="py-2 px-4 text-yellow-600">Pending</td>
-              <td className="py-2 px-4">
-                <button className="text-blue-500 hover:text-blue-700">
-                  View
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td className="py-2 px-4">#12347</td>
-              <td className="py-2 px-4">Tom Jones</td>
-              <td className="py-2 px-4">₹300</td>
-              <td className="py-2 px-4 text-red-600">Canceled</td>
-              <td className="py-2 px-4">
-                <button className="text-blue-500 hover:text-blue-700">
-                  View
-                </button>
-              </td>
-            </tr>
-          </tbody>
+  {orders
+    .sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds) // Sort by date (latest first)
+    .slice(0, 5) // Get only the first 5 orders
+    .map((order) => (
+      <tr key={order.id} className="border-b">
+        <td className="py-3 px-4">{order.id}</td>
+        <td className="py-3 px-4">{new Date(order.timestamp?.seconds * 1000).toLocaleString()}</td>
+        <td className="py-3 px-4">{order.userEmail}</td>
+        <td className="py-3 px-4">
+          <span
+            className={`text-${
+              order.status === "Shipped"
+                ? "blue"
+                : order.status === "Delivered"
+                ? "green"
+                : "gray"
+            }-700 font-bold`}
+          >
+            {order.status}
+          </span>
+        </td>
+        <td className="py-3 px-4">
+          <button
+            className="bg-indigo-500 hover:bg-indigo-700 text-white py-1 px-3 rounded"
+            onClick={() => handleViewOrder(order.id)}
+          >
+            View
+          </button>
+        </td>
+      </tr>
+    ))}
+</tbody>
         </table>
       </div>
+
+      {selectedOrder && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h2 className="text-xl font-bold mb-4">Order Details</h2>
+      <p><strong>Order ID:</strong> {selectedOrder.id}</p>
+      <p><strong>User Email:</strong> {selectedOrder.userEmail}</p>
+      <p><strong>Order Date:</strong> {new Date(selectedOrder.timestamp?.seconds * 1000).toLocaleString()}</p>
+      <p><strong>Status:</strong> {selectedOrder.status}</p>
+      <button 
+        className="mt-4 bg-red-500 hover:bg-red-700 text-white py-1 px-3 rounded"
+        onClick={() => setSelectedOrder(null)}
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
 
       {/* Quick Actions */}
       <div className="flex justify-between mt-6">

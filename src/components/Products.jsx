@@ -221,8 +221,6 @@ useEffect(() => {
           Show Product List
         </button>
       </div>
-
-      {/* Product Form */}
       <div className="bg-white p-4 rounded-lg shadow-md mb-4 ml-10">
         <ProductForm
           onSubmit={editingProduct ? handleEditProduct : handleAddProduct}
@@ -230,138 +228,114 @@ useEffect(() => {
         />
       </div>
 
-      {/* Product List Modal Title */}
       {modalVisible && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-          <div className="bg-white p-4 rounded-lg shadow-lg max-w-3xl w-full">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Product List
-            </h2>
+  <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+       <div className="bg-white p-4 rounded-lg shadow-lg w-full sm:w-1/2 md:w-3/4 lg:w-2/5 xl:w-2/4">
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">
+        Product List
+      </h2>
 
-            {/* Search Bar for Product List */}
-            <div className="flex justify-between items-center mb-4">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search products..."
-                className="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
+      {/* Search Bar for Product List */}
+      <div className="flex justify-between items-center mb-4">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search products..."
+          className="w-full sm:w-1/2 p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
 
-            {/* Category Filter */}
-            <div className="flex justify-between items-center mb-4">
-      <select
-        value={categoryFilter}
-        onChange={(e) => setCategoryFilter(e.target.value)}
-        className="w-full sm:w-1/3 p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      >
-        <option value="">All Categories</option>
-        {categories.map((category, index) => (
-          <option key={index} value={category}>
-            {category}
-          </option>
-        ))}
-      </select>
+      {/* Category Filter */}
+      <div className="flex justify-between items-center mb-4">
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="w-full sm:w-1/3 p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">All Categories</option>
+          {categories.map((category, index) => (
+            <option key={index} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Product List Table with Vertical Scrolling */}
+      <div className="overflow-y-auto max-h-80 bg-white rounded-lg shadow-md mb-4">
+        <table className="w-full table-auto text-left">
+          <thead className="bg-indigo-600 text-white">
+            <tr>
+              <th className="py-2 px-3 text-sm font-semibold">Image</th>
+              <th className="py-2 px-3 text-sm font-semibold">Product Name</th>
+              <th className="py-2 px-3 text-sm font-semibold">Price</th>
+              <th className="py-2 px-3 text-sm font-semibold">Discount Price</th>
+              <th className="py-2 px-3 text-sm font-semibold">Stock</th>
+              <th className="py-2 px-3 text-sm font-semibold">Product Availability</th>
+              <th className="py-2 px-3 text-sm font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product) => (
+                <tr key={product.id} className="hover:bg-gray-50">
+                  <td className="py-2 px-3">
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-14 h-14 object-cover rounded-full"
+                      />
+                    ) : (
+                      <span>No image</span>
+                    )}
+                  </td>
+                  <td className="py-2 px-3">{product.name}</td>
+                  <td className="py-2 px-3">₹{product.price}</td>
+                  <td className="py-2 px-3">₹{product.discountPrice}</td>
+                  <td className="py-2 px-3">{product.stock}</td>
+                  <td className="py-2 px-3">{product.availability}</td>
+                  <td className="py-2 px-3 flex items-center space-x-2">
+                    <button
+                      onClick={() => setEditingProduct(product)}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProduct(product.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" className="py-2 px-3 text-center text-gray-500">
+                  No products found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Close Modal Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setModalVisible(false)}
+          className="bg-gray-500 text-white py-2 px-6 rounded-lg shadow-md hover:bg-gray-600"
+        >
+          Close
+        </button>
+      </div>
     </div>
+  </div>
+)}
 
-            {/* <div className="flex justify-between items-center mb-4">
-      <select
-        value={categoryFilter}
-        onChange={(e) => setCategoryFilter(e.target.value)}
-        className="w-full sm:w-1/3 p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      >
-        <option value="">All Categories</option>
-        {categories.map((category) => (
-          <option key={category} value={category}>
-            {category}
-          </option>
-        ))}
-      </select>
-    </div> */}
-
-            {/* Product Table */}
-            <div className="overflow-x-auto bg-white rounded-lg shadow-md mb-4">
-              <table className="w-full table-auto text-left">
-                <thead className="bg-indigo-600 text-white">
-                  <tr>
-                  <th className="py-2 px-3 text-sm font-semibold">
-                     Image
-                    </th>
-                    <th className="py-2 px-3 text-sm font-semibold">
-                      Product Name
-                    </th>
-                    <th className="py-2 px-3 text-sm font-semibold">Price</th>
-                    <th className="py-2 px-3 text-sm font-semibold">Discount Price
-                    </th>
-                    <th className="py-2 px-3 text-sm font-semibold">Stock</th>
-                    <th className="py-2 px-3 text-sm font-semibold">Product Availability</th>
-                    <th className="py-2 px-3 text-sm font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.length > 0 ? (
-                    filteredProducts.map((product) => (
-                      <tr key={product.id} className="hover:bg-gray-50">
-                         <td className="py-2 px-3">
-              {product.image ? (
-                <img
-                  src={product.image} 
-                  alt={product.name}
-                  className="w-14 h-14 object-cover rounded-full"
-                />
-              ) : (
-                <span>No image</span>
-              )}
-            
-            </td>
-                        <td className="py-2 px-3">{product.name}</td>
-                        <td className="py-2 px-3">₹{product.price}</td>
-                        <td className="py-2 px-3">₹{product.discountPrice}</td>
-                        <td className="py-2 px-3">{product.stock}</td>
-                        <td className="py-2 px-3">{product.availability}</td>
-                        <td className="py-2 px-3 flex items-center space-x-2">
-                          <button
-                            onClick={() => setEditingProduct(product)}
-                            className="text-blue-500 hover:text-blue-700"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProduct(product.id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="4"
-                        className="py-2 px-3 text-center text-gray-500"
-                      >
-                        No products found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Close Modal Button */}
-            <div className="flex justify-end">
-              <button
-                onClick={() => setModalVisible(false)}
-                className="bg-gray-500 text-white py-2 px-6 rounded-lg shadow-md hover:bg-gray-600"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

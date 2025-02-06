@@ -117,34 +117,34 @@ const PaymentMethods = () => {
   );
 
 
-  const handleBulkEnable = () => {
-    const updatedMethods = paymentMethods.map((method) => {
-      if (selectedMethods.includes(method.id)) {
-        return { ...method, enabled: true, updatedAt: new Date() };
-      }
-      return method;
-    });
-    setPaymentMethods(updatedMethods);
-  };
+  // const handleBulkEnable = () => {
+  //   const updatedMethods = paymentMethods.map((method) => {
+  //     if (selectedMethods.includes(method.id)) {
+  //       return { ...method, enabled: true, updatedAt: new Date() };
+  //     }
+  //     return method;
+  //   });
+  //   setPaymentMethods(updatedMethods);
+  // };
   
-  const handleBulkDisable = () => {
-    const updatedMethods = paymentMethods.map((method) => {
-      if (selectedMethods.includes(method.id)) {
-        return { ...method, enabled: false, updatedAt: new Date() };
-      }
-      return method;
-    });
-    setPaymentMethods(updatedMethods);
-  };
+  // const handleBulkDisable = () => {
+  //   const updatedMethods = paymentMethods.map((method) => {
+  //     if (selectedMethods.includes(method.id)) {
+  //       return { ...method, enabled: false, updatedAt: new Date() };
+  //     }
+  //     return method;
+  //   });
+  //   setPaymentMethods(updatedMethods);
+  // };
   
 
-  const handleSelectMethod = (id) => {
-    if (selectedMethods.includes(id)) {
-      setSelectedMethods(selectedMethods.filter((methodId) => methodId !== id));
-    } else {
-      setSelectedMethods([...selectedMethods, id]);
-    }
-  };
+  // const handleSelectMethod = (id) => {
+  //   if (selectedMethods.includes(id)) {
+  //     setSelectedMethods(selectedMethods.filter((methodId) => methodId !== id));
+  //   } else {
+  //     setSelectedMethods([...selectedMethods, id]);
+  //   }
+  // };
   const filteredPaymentMethods = paymentMethods.filter((method) =>
     method.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -237,7 +237,7 @@ const PaymentMethods = () => {
         /> */}
         <button
           onClick={() => setShowForm(true)}
-          className="bg-green-500 text-white px-6 py-3 rounded-md hover:bg-green-600 focus:outline-none"
+          className="bg-red-500 text-white px-6 py-3 rounded-md hover:bg-green-600 focus:outline-none"
         >
           Add Payment Method
         </button>

@@ -22,7 +22,7 @@ import Profile from "./pages/profile";
 import Accountsettings from "./pages/account-settings";
 import { ThemeContext } from "./context/ThemeContext";
 import { ThemeProvider } from "./context/ThemeContext";
-
+import LandscapeLock from "./components/LandscapeLock";
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { layout, changeLayout } = useContext(ThemeContext); // Consuming ThemeContext
@@ -64,6 +64,9 @@ function App() {
             changeLayout={changeLayout} // Pass changeLayout function to Sidebar
           />
         )}
+        
+      <LandscapeLock />
+       
 
         <div className="flex-1 p-8">
           

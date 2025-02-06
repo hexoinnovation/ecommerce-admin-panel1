@@ -37,12 +37,6 @@ const ReportsPage = () => {
   ];
 
 
-  const productData = [
-    { productName: "Laptop", sold: 30, revenue: 15000 },
-    { productName: "Phone", sold: 40, revenue: 20000 },
-    { productName: "Tablet", sold: 20, revenue: 10000 },
-  ];
-
   const handleDateChange = (event) => {
     if (event.target.name === "start") {
       setStartDate(event.target.value);
@@ -64,7 +58,7 @@ const ReportsPage = () => {
     data.date.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage,] = useState(1);
   const [itemsPerPage] = useState(10);
   const [vendors, setVendors] = useState([]);
   
@@ -194,8 +188,8 @@ const ReportsPage = () => {
   );
 
  const [products, setProducts] = useState([]);
- const [filtered , setFilteredProducts] = useState([]);
-   const [categoryFilter, setCategoryFilter] = useState(""); // Filter by category
+ const [ ,setFilteredProducts] = useState([]);
+   const [categoryFilter] = useState(""); // Filter by category
 // Fetch products from Firestore
 useEffect(() => {
   const fetchProducts = async () => {

@@ -1,5 +1,7 @@
-import React, { useState } from "react";
-
+import React, { useState,useEffect } from "react";
+import {collection,getDocs,} from "firebase/firestore";
+import { db } from "../components/firebase";
+import { getAuth } from "firebase/auth"; // Import Firebase Auth
 // Helper function to simulate export functionality
 const exportToCSV = (data, filename = "report.csv") => {
   const csvContent = [
@@ -32,11 +34,6 @@ const ReportsPage = () => {
     { date: "2025-01-04", sales: 2200, orders: 70 },
   ];
 
-  const customerData = [
-    { customerName: "John Doe", orders: 5, totalSpent: 300 },
-    { customerName: "Jane Smith", orders: 3, totalSpent: 150 },
-    { customerName: "Michael Brown", orders: 8, totalSpent: 500 },
-  ];
 
   const productData = [
     { productName: "Laptop", sold: 30, revenue: 15000 },
@@ -64,6 +61,8 @@ const ReportsPage = () => {
   const filteredSalesData = filterByDateRange(salesData).filter((data) =>
     data.date.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+
 
   const renderSalesReport = () => (
     <div className="overflow-x-auto bg-white shadow-xl rounded-lg p-4">
@@ -97,66 +96,163 @@ const ReportsPage = () => {
     </div>
   );
 
+
+
+  const [customers, setCustomers] = useState([]);
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const querySnapshot = await getDocs(
+          collection(db, "admin", "nithya123@gmail.com", "users")
+        );
+        const customersData = [];
+        querySnapshot.forEach((doc) => {
+          customersData.push({ id: doc.id, ...doc.data() });
+        });
+        setCustomers(customersData);
+      } catch (error) {
+        console.error("Error fetching customers:", error);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
+
   const renderCustomerReport = () => (
     <div className="overflow-x-auto bg-white shadow-xl rounded-lg p-4">
       <table className="min-w-full table-auto border-separate border-spacing-0">
-        <thead className="bg-green-100">
+      <thead className="bg-green-100">
           <tr>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
-              Customer Name
-            </th>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
-              Orders
-            </th>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
-              Total Spent (₹)
-            </th>
+            <th  className="px-4 py-3 text-left text-sm font-bold text-gray-600 border-b ">Customer Name</th>
+            <th  className="px-4 py-3 text-left text-sm font-bold text-gray-600 border-b">Email</th>
+            <th  className="px-4 py-3 text-left text-sm font-bold text-gray-600 border-b">Phone Number</th>
+            <th  className="px-4 py-3 text-left text-sm font-bold text-gray-600 border-b">Address</th>
+
           </tr>
         </thead>
         <tbody>
-          {customerData.map((data, index) => (
-            <tr
-              key={index}
-              className={`hover:bg-gray-50 ${index % 2 === 0 ? "bg-gray-100" : ""}`}
-            >
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.customerName}</td>
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.orders}</td>
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.totalSpent}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+  {customers.map((customer) => (
+    <tr key={customer.id} className="hover:bg-blue-100 transition duration-300">
+      <td className="px-4 py-2 text-sm text-gray-700 border-b">{`${customer.firstName} ${customer.lastName}`}</td>
+      <td className="px-4 py-2 text-sm text-gray-700 border-b">{customer.email}</td>
+      <td className="px-4 py-2 text-sm text-gray-700 border-b">{customer.phone}</td>
+      <td className="px-4 py-2 text-sm text-gray-700 border-b">{customer.address}</td>
+    </tr>
+  ))}
+</tbody>
+</table>
     </div>
   );
+
+ const [products, setProducts] = useState([]);
+ const [filtered , setFilteredProducts] = useState([]);
+   const [categoryFilter, setCategoryFilter] = useState(""); // Filter by category
+// Fetch products from Firestore
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      // Get the current user's email
+      const auth = getAuth(); // Initialize Firebase Auth
+      const currentUser = auth.currentUser; // Get the currently signed-in user
+
+      if (!currentUser || !currentUser.email) {
+        console.error("No user is signed in. Please sign in to view products.");
+        return;
+      }
+
+      const userEmail = currentUser.email; // Extract the user's email
+
+      // Specify the path to your 'Products' collection
+      const productsCollectionRef = collection(
+        db,
+        "admin",
+        userEmail, // Use the current user's email
+        "products"
+      );
+
+      // Fetch products from Firestore
+      const productSnapshot = await getDocs(productsCollectionRef);
+      const productList = productSnapshot.docs.map((doc) => ({
+        id: doc.id, // Firestore-generated ID
+        ...doc.data() // Data from the document
+      }));
+
+      setProducts(productList);
+      setFilteredProducts(productList); // Set filtered products if needed
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
+
+  fetchProducts();
+}, []); // Dependency array, no additional dependencies required here
+
+const filteredProducts = products.filter(
+  (product) =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    (categoryFilter ? product.category === categoryFilter : true)
+);
 
   const renderProductReport = () => (
     <div className="overflow-x-auto bg-white shadow-xl rounded-lg p-4">
       <table className="min-w-full table-auto border-separate border-spacing-0">
-        <thead className="bg-yellow-100">
+      <thead className="bg-yellow-100">
           <tr>
+          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
+              Image
+            </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
               Product Name
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
-              Units Sold
+            Price
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
-              Revenue (₹)
+            Discount Price
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
+            Stock
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
+            Product Availability	
             </th>
           </tr>
         </thead>
         <tbody>
-          {productData.map((data, index) => (
-            <tr
-              key={index}
-              className={`hover:bg-gray-50 ${index % 2 === 0 ? "bg-gray-100" : ""}`}
-            >
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.productName}</td>
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.sold}</td>
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.revenue}</td>
-            </tr>
-          ))}
-        </tbody>
+                  {filteredProducts.length > 0 ? (
+                    filteredProducts.map((product) => (
+                      <tr key={product.id} className="hover:bg-gray-50">
+                         <td className="py-2 px-3">
+              {product.image ? (
+                <img
+                  src={product.image} 
+                  alt={product.name}
+                  className="w-14 h-14 object-cover rounded-full"
+                />
+              ) : (
+                <span>No image</span>
+              )}
+            
+            </td>
+                        <td className="py-2 px-3">{product.name}</td>
+                        <td className="py-2 px-3">₹{product.price}</td>
+                        <td className="py-2 px-3">₹{product.discountPrice}</td>
+                        <td className="py-2 px-3">{product.stock}</td>
+                        <td className="py-2 px-3">{product.availability}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="4"
+                        className="py-2 px-3 text-center text-gray-500"
+                      >
+                        No products found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
       </table>
     </div>
   );

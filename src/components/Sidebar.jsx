@@ -34,16 +34,21 @@ const Sidebar = ({
   return (
         <div  className="min-h-screen" >
            <div className="relative flex">
-      <button onClick={toggleSidebar} className="absolute left-2 top-3 z-50 text-white p-2 rounded bg-indigo-700 hover:bg-indigo-600">
+          
+      <button onClick={toggleSidebar} className="absolute left-2 top-10 z-50 text-white p-2 rounded bg-indigo-700 hover:bg-indigo-600 ml-4">
         {isSidebarOpen ? <FaBars size={24} /> : <FaBars size={24} />}
       </button>
-      <div className={`min-h-screen transition-all duration-300 ease-in-out flex flex-col ${isSidebarOpen ? "w-52 p-4" : "w-0 overflow-hidden hidden "}`} style={{ backgroundColor: sidebarColor }}>
-
+    
+      <div className={`min-h-screen transition-all duration-300 ease-in-out flex flex-col ${isSidebarOpen ? "w-60 p-4" : "w-0 overflow-hidden hidden "}`} style={{ backgroundColor: sidebarColor }}>
+      <img src="/logo.png" alt="Logo" className="h-26 w-32 ml-20 mt-2" />
         {isSidebarOpen && (
-          <h2 className="text-1xl font-semibold text-white transition-all duration-300 mt-20">
+          
+          <h2 className="text-1xl font-semibold text-white transition-all duration-300 mt-8">
             E-Com Admin Panel
           </h2>
+          
         )}
+        
         <ul className="space-y-4 mt-7 flex flex-col items-start">
           {[
             { to: "/", text: "Dashboard" },

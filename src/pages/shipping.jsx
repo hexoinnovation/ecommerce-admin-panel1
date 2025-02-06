@@ -76,8 +76,10 @@ const ShippingSettings = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Shipping Settings</h1>
-
+ 
+      <div className="flex flex-col justify-center items-center p-6">
+      <h1 className="text-4xl font-bold text-blue-700 mb-2  ">   Shipping Settings</h1>
+</div>
       {/* 2-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left Column - Shipping Methods */}

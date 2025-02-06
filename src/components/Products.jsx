@@ -196,8 +196,8 @@ useEffect(() => {
   return (
     <div className="space-y-6">
       {/* Product Form Title and Show Product List Button in same row */}
-      <div className="flex justify-between items-center bg-white p-2 rounded-lg shadow-md mb-4">
-        <h2 className="text-xl font-semibold text-gray-800 text-blue-600">
+      <div className="flex justify-between items-center bg-white p-2 rounded-lg shadow-md mb-4 ml-10">
+        <h2 className="text-xl font-semibold text-gray-800 text-blue-600 ml-2">
           {editingProduct ? "Edit Product" : "Add New Product"}
         </h2>
         <button
@@ -209,7 +209,7 @@ useEffect(() => {
       </div>
 
       {/* Product Form */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-4">
+      <div className="bg-white p-4 rounded-lg shadow-md mb-4 ml-10">
         <ProductForm
           onSubmit={editingProduct ? handleEditProduct : handleAddProduct}
           existingProduct={editingProduct}

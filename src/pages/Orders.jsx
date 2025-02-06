@@ -172,9 +172,11 @@ const handleStatusChange = async (orderId, newStatus) => {
   });
   
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6 p-4 ml-10 mb-4">
     {/* Header */}
-    <h1 className="text-2xl sm:text-4xl font-bold text-indigo-600">Orders</h1>
+    <div className="flex flex-col justify-center items-center p-6">
+      <h1 className="text-4xl font-bold text-blue-700 mb-1  ">Orders</h1>
+</div>
   
     {/* Filters and Actions */}
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
@@ -296,7 +298,7 @@ const handleStatusChange = async (orderId, newStatus) => {
             </button>
             <button
               onClick={() => handleViewDetails(order)}
-              className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 w-full sm:w-auto ml-32"
+              className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 w-full sm:w-auto ml-24"
             >
               View Details
             </button>

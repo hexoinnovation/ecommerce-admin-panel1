@@ -194,9 +194,10 @@ const handleEditCategory = async () => {
   );
 
   return (
-    <div className="space-y-6 p-6">
-      <h1 className="text-4xl font-bold text-blue-700 mb-6">Product Categories</h1>
-
+    <div className="space-y-6 p-6 ml-10">
+      <div className="flex flex-col justify-center items-center p-6">
+      <h1 className="text-4xl font-bold text-blue-700 mb-1  ">Product Categories</h1>
+</div>
       {/* Search Bar */}
       <input
         type="text"

@@ -178,6 +178,7 @@ function Vendors() {
   return (
     <div className="space-y-6 p-6">
      
+     
       <div className="flex flex-col justify-center items-center p-6">
       <h1 className="text-4xl font-bold text-blue-700 mb-1  ">   Vendors</h1>
 </div>

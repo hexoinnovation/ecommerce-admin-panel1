@@ -311,7 +311,7 @@ function ProductForm({ onSubmit, existingProduct }) {
         type="submit"
         className="w-full bg-gray-800 text-white py-3 px-4 rounded-lg mt-6 hover:bg-gray-700 transition duration-300"
       >
-        {existingProduct ? "Update Product" : "Add Product"}
+        {existingProduct ? "Add Product" : "Add Product"}
       </button>
     </form>
   );

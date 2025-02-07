@@ -303,6 +303,7 @@ const filteredProducts = products.filter(
     </div>
   );
 
+  
   return (
     <div className="container mx-auto p-6">
       <div className="flex flex-col justify-center items-center p-6">

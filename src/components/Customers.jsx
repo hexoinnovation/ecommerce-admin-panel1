@@ -291,7 +291,6 @@ function Customers() {
             <th className="py-3 px-4 text-left">Email</th>
             <th className="py-3 px-4 text-left">Phone Number</th>
             <th className="py-3 px-4 text-left">Address</th>
-            <th className="py-3 px-4 text-left">Orders</th>
             <th className="py-3 px-4 text-left">Actions</th>
           </tr>
         </thead>
@@ -316,7 +315,6 @@ function Customers() {
       <td className="py-2 px-4">{customer.email}</td>
       <td className="py-2 px-4">{customer.phone}</td>
       <td className="py-2 px-4">{customer.address}</td>
-      <td className="py-2 px-4">{customer.orders || "N/A"}</td>
       <td className="py-2 px-4 flex space-x-2">
         {/* <button
           onClick={() => handleEdit(customer)}

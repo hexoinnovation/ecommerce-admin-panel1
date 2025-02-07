@@ -62,33 +62,79 @@ const ReportsPage = () => {
     data.date.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-
-
-  const renderSalesReport = () => (
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [vendors, setVendors] = useState([]);
+  
+  useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        const auth = getAuth();
+        const userEmail = auth.currentUser ? auth.currentUser.email : null;
+  
+        if (!userEmail) {
+          console.error("No user is logged in");
+          return;
+        }
+  
+        const vendorCollectionRef = collection(db, `admin/${userEmail}/vendors`);
+        const vendorSnapshot = await getDocs(vendorCollectionRef);
+        const vendorList = vendorSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+  
+        setVendors(vendorList);
+      } catch (error) {
+        console.error("Error fetching vendors: ", error);
+      }
+    };
+  
+    fetchVendors();
+  }, []);
+  
+  // Filter the vendors based on the search query
+  const filteredVendors = vendors.filter(
+    (vendor) =>
+      vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vendor.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vendor.phone.includes(searchQuery)
+  );
+  
+  // Pagination logic
+  const indexOfLastVendor = currentPage * itemsPerPage;
+  const indexOfFirstVendor = indexOfLastVendor - itemsPerPage;
+  const currentVendors = filteredVendors.slice(indexOfFirstVendor, indexOfLastVendor);
+  
+  const renderVendorsReport = () => (
     <div className="overflow-x-auto bg-white shadow-xl rounded-lg p-4">
       <table className="min-w-full table-auto border-separate border-spacing-0">
         <thead className="bg-blue-100">
           <tr>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
-              Date
+            <th className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b">
+              Vendor Name
             </th>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
-              Sales (₹)
+            <th className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b">
+              Email
             </th>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
-              Orders
+            <th className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b">
+              Phone
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b">
+              Address
             </th>
           </tr>
         </thead>
         <tbody>
-          {filteredSalesData.map((data, index) => (
+          {currentVendors.map((vendor, index) => (
             <tr
-              key={index}
+              key={vendor.id}
               className={`hover:bg-gray-50 ${index % 2 === 0 ? "bg-gray-100" : ""}`}
             >
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.date}</td>
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.sales}</td>
-              <td className="px-4 py-2 text-sm text-gray-700 border-b">{data.orders}</td>
+              <td className="px-4 py-2 text-sm text-gray-700 border-b">{vendor.name}</td>
+              <td className="px-4 py-2 text-sm text-gray-700 border-b">{vendor.email}</td>
+              <td className="px-4 py-2 text-sm text-gray-700 border-b">{vendor.phone}</td>
+              <td className="px-4 py-2 text-sm text-gray-700 border-b">{vendor.address}</td>
             </tr>
           ))}
         </tbody>
@@ -124,10 +170,10 @@ const ReportsPage = () => {
       <table className="min-w-full table-auto border-separate border-spacing-0">
       <thead className="bg-green-100">
           <tr>
-            <th  className="px-4 py-3 text-left text-sm font-bold text-gray-600 border-b ">Customer Name</th>
-            <th  className="px-4 py-3 text-left text-sm font-bold text-gray-600 border-b">Email</th>
-            <th  className="px-4 py-3 text-left text-sm font-bold text-gray-600 border-b">Phone Number</th>
-            <th  className="px-4 py-3 text-left text-sm font-bold text-gray-600 border-b">Address</th>
+            <th  className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b ">Customer Name</th>
+            <th  className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b">Email</th>
+            <th  className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b">Phone Number</th>
+            <th  className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b">Address</th>
 
           </tr>
         </thead>
@@ -199,22 +245,22 @@ const filteredProducts = products.filter(
       <table className="min-w-full table-auto border-separate border-spacing-0">
       <thead className="bg-yellow-100">
           <tr>
-          <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
+          <th className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b">
               Image
             </th>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
+            <th className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b">
               Product Name
             </th>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
+            <th className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b">
             Price
             </th>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
+            <th className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b">
             Discount Price
             </th>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
+            <th className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b">
             Stock
             </th>
-            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600 border-b">
+            <th className="px-4 py-3 text-left text-sm font-bold text-black-900 border-b">
             Product Availability	
             </th>
           </tr>
@@ -259,8 +305,9 @@ const filteredProducts = products.filter(
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Reports</h1>
-
+      <div className="flex flex-col justify-center items-center p-6">
+      <h1 className="text-4xl font-bold text-blue-700 mb-1  ">Reports</h1>
+</div>
       {/* Report Filters (e.g., Date Range, Report Type) */}
       <div className="mb-6 space-y-4 md:space-y-0 md:flex md:items-center md:gap-4">
         <div className="flex flex-col sm:flex-row sm:space-x-4">
@@ -269,7 +316,7 @@ const filteredProducts = products.filter(
             onChange={(e) => setSelectedReport(e.target.value)}
             value={selectedReport}
           >
-            <option value="sales">Sales Report</option>
+            <option value="sales">Vendors Report</option>
             <option value="customers">Customer Report</option>
             <option value="products">Product Report</option>
           </select>
@@ -317,7 +364,7 @@ const filteredProducts = products.filter(
       </div>
 
       {/* Report Tables */}
-      {selectedReport === "sales" && renderSalesReport()}
+      {selectedReport === "sales" && renderVendorsReport()}
       {selectedReport === "customers" && renderCustomerReport()}
       {selectedReport === "products" && renderProductReport()}
     </div>

@@ -122,9 +122,9 @@ function ProductForm({ onSubmit, existingProduct }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 bg-white p-4 rounded-lg shadow-md max-h-screen flex flex-col"
+      className="space-y-4 bg-white p-4 rounded-lg shadow-md max-h-screen flex flex-col "
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 overflow-hidden">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 overflow-hidden ">
         {/* Product Name */}
         <div>
           <label className="block text-gray-700 text-sm font-semibold">

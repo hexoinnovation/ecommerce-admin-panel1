@@ -168,10 +168,10 @@ function Coupons() {
 
   return (
     <div className="space-y-6 p-6">
-      <h1 className="text-4xl font-bold text-blue-700 mb-6">
-        Coupons & Discounts
-      </h1>
-
+    
+      <div className="flex flex-col justify-center items-center p-6">
+      <h1 className="text-4xl font-bold text-blue-700 mb-1  ">   Coupons & Discounts</h1>
+</div>
       {/* Search Bar */}
       <div className="mb-6">
         <input

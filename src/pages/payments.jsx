@@ -122,12 +122,12 @@ const PaymentMethods = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">
-        Manage Payment Methods
-      </h1>
-
+     
+      <div className="flex flex-col justify-center items-center p-6">
+      <h1 className="text-4xl font-bold text-blue-700 mb-1  ">    Manage Payment Methods</h1>
+</div>
       {/* Search Bar */}
-      <div className="mb-6 flex items-center justify-between gap-4">
+      <div className="flex flex-col justify-center items-center p-6">
         <input
           type="text"
           value={searchQuery}

@@ -286,7 +286,7 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-4xl font-bold text-gray-800">
+        <h1 className="text-4xl font-bold text-gray-800 ml-20">
           Welcome back, Admin!
         </h1>
 

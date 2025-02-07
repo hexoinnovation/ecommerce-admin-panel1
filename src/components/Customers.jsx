@@ -196,9 +196,9 @@ function Customers() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-blue-800 text-center">
-        Customers Details
-      </h1>
+       <div className="flex flex-col justify-center items-center p-6">
+      <h1 className="text-4xl font-bold text-blue-700 mb-1  ">Customer Details</h1>
+</div>
 
       {/* Search Input */}
       <div className="flex justify-center mb-4">

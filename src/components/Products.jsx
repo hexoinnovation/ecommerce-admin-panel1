@@ -4,7 +4,8 @@ import { collection, addDoc, setDoc, doc, deleteDoc,getDocs } from "firebase/fir
 import { db } from "./firebase";
 import { useAuth } from "../components/auth";
 import { getAuth } from "firebase/auth";
-
+import {Pencil, Box  } from "lucide-react"; // Import the icons
+import { motion } from "framer-motion";
 function Products() {
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -197,9 +198,22 @@ useEffect(() => {
     <div className="space-y-6">
       {/* Product Form Title and Show Product List Button in same row */}
       <div className="flex justify-between items-center bg-white p-2 rounded-lg shadow-md mb-4 ml-10">
-        <h2 className="text-xl font-semibold text-gray-800 text-blue-600 ml-2">
-          {editingProduct ? "Edit Product" : "Add New Product"}
-        </h2>
+      <div className="flex items-center">
+      <motion.div
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+      >
+        {editingProduct ? (
+          <Pencil size={24} className="text-blue-600 mr-2" />
+        ) : (
+          <Box size={24} className="text-blue-600 mr-2" />
+        )}
+      </motion.div>
+      <h2 className="text-xl font-semibold text-gray-800 text-blue-600 ml-2">
+        {editingProduct ? "Edit Product" : "Add New Product"}
+      </h2>
+    </div>
         <button
           className="p-3 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition duration-200"
           onClick={() => setModalVisible(true)}

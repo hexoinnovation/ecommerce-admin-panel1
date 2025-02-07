@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Truck } from "lucide-react"; // Truck icon for shipping
+import { motion } from "framer-motion";
 
 const ShippingSettings = () => {
   const [shippingMethods, setShippingMethods] = useState([
@@ -77,9 +79,16 @@ const ShippingSettings = () => {
   return (
     <div className="container mx-auto p-6">
  
-      <div className="flex flex-col justify-center items-center p-6">
-      <h1 className="text-4xl font-bold text-blue-700 mb-2  ">   Shipping Settings</h1>
-</div>
+ <div className="flex flex-col justify-center items-center p-6">
+      <motion.div
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+      >
+        <Truck size={48} className="text-blue-700" />
+      </motion.div>
+      <h1 className="text-4xl font-bold text-blue-700 mt-2">Shipping Settings</h1>
+    </div>
       {/* 2-Column Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left Column - Shipping Methods */}

@@ -11,7 +11,8 @@ import {
 } from "firebase/firestore";
 import { db } from "../components/firebase";
 import { getAuth } from "firebase/auth"; // Import Firebase Auth
-
+import { Users } from "lucide-react"; // Group of users icon
+import { motion } from "framer-motion";
 function Vendors() {
   const [vendors, setVendors] = useState([]);
   const [selectedVendors, setSelectedVendors] = useState([]);
@@ -178,10 +179,16 @@ function Vendors() {
   return (
     <div className="space-y-6 p-6">
      
-     
-      <div className="flex flex-col justify-center items-center p-6">
-      <h1 className="text-4xl font-bold text-blue-700 mb-1  ">   Vendors</h1>
-</div>
+     <div className="flex flex-col justify-center items-center p-6">
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+      >
+        <Users size={48} className="text-blue-700" />
+      </motion.div>
+      <h1 className="text-4xl font-bold text-blue-700 mt-2">Vendors</h1>
+    </div>
       {/* Search Bar */}
       <input
         type="text"

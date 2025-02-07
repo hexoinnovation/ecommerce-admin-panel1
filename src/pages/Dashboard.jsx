@@ -347,7 +347,7 @@ function Dashboard() {
     .slice(0, 5) // Get only the first 5 orders
     .map((order) => (
       <tr key={order.id} className="border-b">
-        <td className="py-3 px-4">{order.id}</td>
+        <td className="py-3 px-4">#{order.id}</td>
         <td className="py-3 px-4">{new Date(order.timestamp?.seconds * 1000).toLocaleString()}</td>
         <td className="py-3 px-4">{order.userEmail}</td>
         <td className="py-3 px-4">

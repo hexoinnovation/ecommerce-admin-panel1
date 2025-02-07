@@ -10,7 +10,8 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { getAuth } from "firebase/auth";
-
+import { TicketPercent } from "lucide-react"; // Icon for coupons & discounts
+import { motion } from "framer-motion";
 function Coupons() {
   const [coupons, setCoupons] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -169,9 +170,16 @@ function Coupons() {
   return (
     <div className="space-y-6 p-6">
     
-      <div className="flex flex-col justify-center items-center p-6">
-      <h1 className="text-4xl font-bold text-blue-700 mb-1  ">   Coupons & Discounts</h1>
-</div>
+    <div className="flex flex-col justify-center items-center p-6">
+      <motion.div
+        initial={{ scale: 0.8, rotate: -10, opacity: 0 }}
+        animate={{ scale: 1, rotate: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+      >
+        <TicketPercent size={48} className="text-blue-700" />
+      </motion.div>
+      <h1 className="text-4xl font-bold text-blue-700 mt-2">Coupons & Discounts</h1>
+    </div>
       {/* Search Bar */}
       <div className="mb-6">
         <input

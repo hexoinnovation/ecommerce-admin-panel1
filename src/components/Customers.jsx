@@ -14,7 +14,8 @@ import { db } from "../components/firebase";
 import * as XLSX from "xlsx"; // Library to export Excel file
 import { getAuth } from "firebase/auth"; // Import Firebase Auth
 import Swal from "sweetalert2";
-
+import { UserCircle } from "lucide-react";
+import { motion } from "framer-motion";
 function Customers() {
   const [customers, setCustomers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -196,9 +197,16 @@ function Customers() {
 
   return (
     <div className="space-y-6">
-       <div className="flex flex-col justify-center items-center p-6">
-      <h1 className="text-4xl font-bold text-blue-700 mb-1  ">Customer Details</h1>
-</div>
+      <div className="flex flex-col justify-center items-center p-6">
+      <motion.div
+        initial={{ scale: 0.5, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+      >
+        <UserCircle size={48} className="text-blue-700" />
+      </motion.div>
+      <h1 className="text-4xl font-bold text-blue-700 mt-2">Customer Details</h1>
+    </div>
 
       {/* Search Input */}
       <div className="flex justify-center mb-4">

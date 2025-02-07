@@ -5,7 +5,8 @@ import Papa from "papaparse"; // Import papaparse for CSV parsing
 import { collection, addDoc,getDocs ,doc,deleteDoc,updateDoc} from "firebase/firestore";
 import { db } from "./firebase";
 import { getAuth } from "firebase/auth";
-
+import { Boxes } from "lucide-react"; // Icon for categories
+import { motion } from "framer-motion";
 function Categories() {
   const [categories, setCategories] = useState([
    
@@ -195,9 +196,16 @@ const handleEditCategory = async () => {
 
   return (
     <div className="space-y-6 p-6 ml-10">
-      <div className="flex flex-col justify-center items-center p-6">
-      <h1 className="text-4xl font-bold text-blue-700 mb-1  ">Product Categories</h1>
-</div>
+       <div className="flex flex-col justify-center items-center p-6">
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeInOut" }}
+      >
+        <Boxes size={48} className="text-blue-700" />
+      </motion.div>
+      <h1 className="text-4xl font-bold text-blue-700 mt-2">Product Categories</h1>
+    </div>
       {/* Search Bar */}
       <input
         type="text"

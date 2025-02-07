@@ -4,7 +4,7 @@ import { db } from "../components/firebase";
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { getAuth } from "firebase/auth";
-import { motion } from "framer-motion";
+
 
 function Dashboard() {
   const [currentDateTime, setCurrentDateTime] = useState(""); // State to store current date and time
@@ -286,17 +286,9 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-      <motion.div
-  className="flex items-center space-x-2 ml-20"
-  initial={{ opacity: 0, y: -20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.8, ease: "easeOut" }}
->
-<span className="text-4xl text-pink-500">🎬</span>
-  <h1 className="text-4xl font-bold text-gray-800">
-    Welcome back, Admin!
-  </h1>
-</motion.div>
+        <h1 className="text-4xl font-bold text-gray-800 ml-20">
+          Welcome back, Admin!
+        </h1>
 
         {/* Display current date and time */}
         <div className="bg-gray-800 text-white p-4 rounded-lg shadow-lg flex items-center justify-between">

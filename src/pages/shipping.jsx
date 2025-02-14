@@ -4,18 +4,14 @@ import { motion } from "framer-motion";
 
 const ShippingSettings = () => {
   const [shippingMethods, setShippingMethods] = useState([
-    { id: 1, name: 'Flat Rate', rate: 100, enabled: true },
-    { id: 2, name: 'Free Shipping', rate: 0, enabled: true },
-    { id: 3, name: 'Carrier: India Post', rate: 150, enabled: false },
+   
   ]);
 
   const [newMethodName, setNewMethodName] = useState('');
   const [newMethodRate, setNewMethodRate] = useState(0);
   const [selectedMethod, setSelectedMethod] = useState([]);
   const [regions, setRegions] = useState([
-    { id: 1, region: 'Delhi', shippingCost: 50 },
-    { id: 2, region: 'Mumbai', shippingCost: 100 },
-    { id: 3, region: 'Bengaluru', shippingCost: 75 },
+   
   ]);
 
 

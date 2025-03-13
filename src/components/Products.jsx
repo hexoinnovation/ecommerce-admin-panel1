@@ -208,11 +208,12 @@ useEffect(() => {
 }, [userEmail]);
 
 
+
   return (
     <div className="space-y-6">
       {/* Product Form Title and Show Product List Button in same row */}
       <div className="flex justify-between items-center bg-white p-2 rounded-lg shadow-md mb-4 ml-10">
-      <div className="flex items-center">
+      <div className="flex items-center ml-5">
       <motion.div
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}

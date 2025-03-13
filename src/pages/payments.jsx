@@ -8,6 +8,8 @@ import {
   deleteDoc,
   updateDoc,
 } from "firebase/firestore";
+
+
 import { Wallet  } from "lucide-react"; // Icon for payment methods
 import { motion } from "framer-motion";
 const PaymentMethods = () => {
@@ -63,6 +65,7 @@ const PaymentMethods = () => {
       console.error("Error updating payment method: ", error);
     }
   };
+
 
   const handleAddPaymentMethod = async () => {
     if (!newPayment.name || !newPayment.category) {
@@ -178,7 +181,7 @@ const PaymentMethods = () => {
                   handleRemove(method.id);
                 }
               }}
-              className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none"
+              className=" ml-50 w-32 bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 focus:outline-none"
             >
               Remove
             </button>
@@ -200,6 +203,7 @@ const PaymentMethods = () => {
           </div>
         ))}
       </div>
+
 
       <div className="mt-6 flex items-center justify-between">
         <button

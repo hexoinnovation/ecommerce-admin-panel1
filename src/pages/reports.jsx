@@ -1,6 +1,6 @@
 import React, { useState,useEffect } from "react";
-import {collection,getDocs,} from "firebase/firestore";
-import { db } from "../components/firebase";
+import {collection,getDocs,doc,setDoc} from "firebase/firestore";
+import { db ,auth} from "../components/firebase";
 import { getAuth } from "firebase/auth"; // Import Firebase Auth
 // Helper function to simulate export functionality
 import { FileText   } from "lucide-react"; // Bar chart icon for reports
@@ -35,6 +35,52 @@ const ReportsPage = () => {
     { date: "2025-01-03", sales: 1800, orders: 55 },
     { date: "2025-01-04", sales: 2200, orders: 70 },
   ];
+
+
+  const [showForm, setShowForm] = useState(false);
+  const [files, setFiles] = useState({});
+
+  const userEmail = auth.currentUser?.email ; // Replace with actual auth logic
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        setFiles((prev) => ({ ...prev, [e.target.name]: reader.result }));
+      };
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!userEmail) {
+      alert("User not logged in!");
+      return;
+    }
+  
+    try {
+      // Get the count of existing image docs
+      const imagesCollectionRef = collection(db, `admin/${userEmail}/webimages`);
+      const snapshot = await getDocs(imagesCollectionRef);
+      const imageCount = snapshot.size + 1; // Get the count and increment for the new image
+  
+      // Generate unique document name (images1, images2, ...)
+      const docRef = doc(db, `admin/${userEmail}/webimages/images${imageCount}`);
+  
+      // Upload image
+      await setDoc(docRef, {
+        image: files.images || "",
+        uploadedAt: new Date().toISOString(),
+      });
+  
+      alert(`Image uploaded successfully as images${imageCount}!`);
+      setShowForm(false);
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      alert("Upload failed!");
+    }
+  };
 
 
   const handleDateChange = (event) => {
@@ -138,6 +184,7 @@ const ReportsPage = () => {
     </div>
   );
 
+  
 
 
   const [customers, setCustomers] = useState([]);
@@ -363,7 +410,38 @@ const filteredProducts = products.filter(
           >
             Export CSV
           </button>
+  
+          <button
+        onClick={() => setShowForm(true)}
+        className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600"
+      >
+        Upload Files
+      </button>
+
+      {showForm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-xl font-semibold mb-4">Upload Files</h2>
+
+            <input type="file" name="images" onChange={handleFileChange} className="border p-2 w-full mb-2" />
+           
+
+            <button
+              onClick={handleUpload}
+              className="bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-green-600 mr-2"
+            >
+              Upload
+            </button>
+            <button
+              onClick={() => setShowForm(false)}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-red-600"
+            >
+              Close
+            </button>
+          </div>
         </div>
+      )}
+         </div>
       </div>
 
       {/* Report Tables */}

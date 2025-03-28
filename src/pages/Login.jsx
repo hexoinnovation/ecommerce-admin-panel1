@@ -31,6 +31,7 @@ function Login({ setIsAuthenticated }) {
         localStorage.setItem("userEmail", email); // Store email in local storage
       }
 
+      
       // Save user data to Firestore under the 'admin' collection
       const userRef = doc(db, `admin/${email}`);
       await setDoc(userRef, {
